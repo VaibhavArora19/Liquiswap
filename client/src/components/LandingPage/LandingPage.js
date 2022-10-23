@@ -1,0 +1,34 @@
+import classes from "./LandingPage.module.css";
+import Button from "../UI/Button";
+import form from "../../images/form.svg";
+import discount from "../../images/discount.svg";
+
+const LandingPage = () => {
+  return (
+    <div className= {`grid grid-cols-2 ${classes.landingPage}`}>
+      <div className={classes.description}>
+        <h2>
+          <span className={classes.highlight}>Earn </span>
+          yield without caring to ever face a loss on your asset.
+        </h2>
+        <p>
+          Put your money to work. Earn yield using aave while never caring about
+          the market crash. Use the earned interest for social good.
+        </p>
+        <div>
+          <Button classes={`btn-md btn-primary btn-active`} label="Deposit" />
+          <button className={`btn btn-md btn-link ${classes.link}`}>
+            <i class="fa-solid fa-play"></i>
+            <span> &nbsp; Watch Demo</span>
+          </button>
+        </div>
+        </div>
+        <div className= {classes.images}>
+            <img src = {form} alt = "form"/>
+            <img src = {discount} className = {classes.discount} alt = "discount" />
+        </div>
+    </div>
+  );
+};
+
+export default LandingPage;

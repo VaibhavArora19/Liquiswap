@@ -1,0 +1,43 @@
+.navbarDiv {
+    background-color: #061823;
+    color: white;    
+}
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    height: 65px;
+    margin: 0 4%;
+}
+
+.title h1{
+    margin-top: 10%;
+    padding-top: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.title img {
+    display: inline-block;
+    margin-bottom: 9%;
+    margin-right: 4px;
+}
+
+.options {
+    width: 160px;
+    margin-left: 5%;
+}
+
+.options h3{
+    display: inline-block;
+    margin-left: 14%;
+    margin-top: 12%;
+    font-size: 1rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.btn {
+    margin-top: 12px;
+}

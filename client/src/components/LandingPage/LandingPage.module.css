@@ -1,0 +1,47 @@
+.highlight{
+    background: -webkit-linear-gradient(31deg, rgba(2,0,36,1) 0%, rgba(37,240,67,0.9897001036742822) 0%, rgba(12,228,245,1) 93%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.description {
+    margin: 9% auto;
+    margin-left: 18%;
+    width: 80%;
+}
+
+.description h2{
+    width: 90%;
+    font-size: 3.3rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.description p {
+    margin-top: 2%;
+    margin-bottom: 2%;
+    width: 85%;
+    font-size: 1rem;
+}
+
+.link {
+    font-size: 1rem;
+    margin-left: 2%;
+}
+
+.landingPage {
+    margin-top: 7%;
+}
+
+.images {
+    margin-left: 7%;
+    margin-top: 12%;
+}
+
+.discount {
+    display: inline-block;
+    z-index: 10;
+    position: relative;
+    bottom: 32%;
+    right: 8%;
+}
