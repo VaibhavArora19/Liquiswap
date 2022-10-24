@@ -6,12 +6,12 @@
 .nav {
     display: flex;
     justify-content: space-between;
-    height: 65px;
+    height: 70px;
     margin: 0 4%;
 }
 
 .title h1{
-    margin-top: 10%;
+    margin-top: 12%;
     padding-top: 0;
     font-size: 1.4rem;
     font-weight: 600;
@@ -32,12 +32,12 @@
 .options h3{
     display: inline-block;
     margin-left: 14%;
-    margin-top: 12%;
+    margin-top: 14%;
     font-size: 1rem;
     text-align: center;
     font-weight: 600;
 }
 
 .btn {
-    margin-top: 12px;
+    margin-top: 10px;
 }

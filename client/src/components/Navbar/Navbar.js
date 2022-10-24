@@ -1,28 +1,54 @@
 import classes from "./Navbar.module.css";
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import Button from "../UI/Button";
+import { Link } from "react-router-dom";
 import {ethers} from "ethers";
+import { useDispatch, useSelector } from "react-redux";
+import { authActions } from "../../store";
 
 const Navbar = () => {
+  const dispatch = useDispatch();
+  const isConnected = useSelector((state) => state.auth.isConnected);
+  const accountAddress = useSelector((state) => state.auth.accountAddress);
 
-  const connectWalletHandler = () => {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer =  provider.getSigner();
-    console.log('signer is ',signer)
+
+ 
+  const connectWalletHandler = async () => {
+
+  
+    if(!isConnected) {
+
+      const accounts = await window.ethereum.request({method:'eth_requestAccounts'})
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer =  provider.getSigner();
+
+      const accountDetails = {
+        accountAddress: accounts[0],
+        provider,
+        signer
+      }
+    
+      dispatch(authActions.connect(accountDetails));
+    }
+
   };
 
   return (
     <div className= {classes.navbarDiv}>
       <div className={classes.nav}>
-        <div className= {classes.title}>
+        <Link to = "/"><div className= {classes.title}>
           <img src="https://img.icons8.com/pastel-glyph/24/40C057/bunch-flowers.png"/>
           <h1>LIQUISWAP</h1>
-        </div>
+        </div></Link>
         <div className={classes.options}>
-          <h3>Invest</h3>
-          <h3>Withdraw</h3>
+          <Link to = "/invest">
+            <h3>Invest</h3>
+          </Link>
+          <Link to = "/withdraw">
+            <h3>Withdraw</h3>
+          </Link>
         </div>
-        <div onClick = {connectWalletHandler} className = {classes.btn}>
-          <ConnectButton showBalance = {false} chainStatus = "icon" label = "Connect Your Wallet"/>
+        <div className = {classes.btn}>
+          <Button classes = "btn-secondary btn-active" label = {isConnected ? `${accountAddress.substr(0, 5)}...${accountAddress.substr(37,42)}` :"Connect your Wallet"} onClick = {connectWalletHandler}/>
         </div>
       </div>
     </div>
