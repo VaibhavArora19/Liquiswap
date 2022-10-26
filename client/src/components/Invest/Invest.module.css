@@ -1,10 +1,71 @@
+.invest {
+    margin-top: 7%;
+    margin-bottom: 3%;
+}
+
 .highlight {
     background: -webkit-linear-gradient(31deg, rgba(2,0,36,1) 0%, rgba(37,240,67,0.9897001036742822) 0%, rgba(12,228,245,1) 93%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
+.investForm {
+    display: inline-block;
+    margin-top: 2%;
+    margin-left: 15%;
+    width: 70%;
+    background-color: rgb(17 24 39);
+    border-radius: 20px;
+}
 .investForm h1{
+    color: white;
+    margin-top: 3%;
     font-size: 1.8rem;
     font-weight: 700;
+    margin-left: 6%;
+}
+
+.investForm form {
+    margin-top: 3%;
+    margin-left: 13%;
+}
+
+.investForm span {
+    text-align: center;
+    color: white;
+}
+
+.investBtn {
+    margin-left: 9%;
+    margin-top: 7%;
+    margin-bottom: 5%;
+}
+
+.allow {
+    margin-left: 8%;
+    margin-top: 5%;
+    width: 500px;
+}
+
+.invest i {
+    margin-left: 5%;
+    color: white;
+    position: relative;
+    top:5px;
+}
+
+.invest img {
+    animation-name: float;
+    animation-iteration-count: infinite;
+    animation-duration: 3.5s;
+    animation-direction: alternate;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(-2%);
+    }
+    100%{
+        transform: translateY(2%);
+    }
 }
