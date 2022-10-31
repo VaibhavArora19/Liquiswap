@@ -123,7 +123,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
     
     /// @dev change the liquidation price for an existing user
     // @ todo: secure who can execute function
-    function setLiquidationPrice(int _liquidationPrice) external onlyOwner {
+    function setLiquidationPrice(int _liquidationPrice) external {
         require(users[msg.sender].usersIndexPosition != 0, 'not a user');
         require(users[msg.sender].balanceWETH >= 0, 'no balance');
         users[msg.sender].liquidationPrice = _liquidationPrice;
