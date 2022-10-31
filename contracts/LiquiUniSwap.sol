@@ -68,6 +68,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
 
 // for testing only
+    int public priceDropAmount; // for testing can simulate a big drop in price
     // uint public runCountPerformUpkeep;
     // uint public upkeepRanCount;
     // bool public upkeepNeeded_;
@@ -104,7 +105,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeed.latestRoundData();
-        return price;
+        return price - priceDropAmount;  // priceTestingFactor aid for testing only
     }
 // <---
 
@@ -296,7 +297,12 @@ contract LiquiSwap is AutomationCompatibleInterface {
     // }
 
 
+    function setPriceDrop(int _priceDrop) external {
+        priceDropAmount = _priceDrop;
+    }
+
     /// @dev - for testing - get all tokens back out of the contract
+    // note : use when finished with the contract. doesn't update user balances
     function sendWETH() external{
         uint256 amt = WETHToken.balanceOf(address(this));
         WETHToken.transfer(msg.sender, amt);
