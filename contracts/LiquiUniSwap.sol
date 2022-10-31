@@ -286,6 +286,10 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
 
 
+    /* 
+    *   testing functions
+    */
+
     // now using functiondepositWETH
     // function transferToContract(uint256 amountIn) external {
     //     // msg.sender must approve this contract
@@ -294,19 +298,19 @@ contract LiquiSwap is AutomationCompatibleInterface {
     //     WETHToken.transferFrom(msg.sender, address(this), amountIn);
     // }
 
-    // use withdrawWeth / withdrawDAI
+
     /// @dev - for testing - get all tokens back out of the contract
-    // function send() external{
-    //     uint256 amt = WETHToken.balanceOf(address(this));
-    //     WETHToken.transfer(msg.sender, amt);
-    // }
+    function sendWETH() external{
+        uint256 amt = WETHToken.balanceOf(address(this));
+        WETHToken.transfer(msg.sender, amt);
+    }
 
-    // // if needed can be done on the token contract
-    // function checkAllowance(address owner, address spender) external view returns(uint256){
-    //     return WETHToken.allowance(owner, spender);
-    // }
+    function sendDAI() external{
+        uint256 amt = DAIToken.balanceOf(address(this));
+        DAIToken.transfer(msg.sender, amt);
+    }
 
-    function getAllowance() external view returns (uint) {
+    function getWETHAllowance() external view returns (uint) {
             return WETHToken.allowance(msg.sender, address(this));
     }
 }
