@@ -28,6 +28,11 @@ contract LiquiSwap is AutomationCompatibleInterface {
     event Withdrawal(address indexed user, string token, uint amount);
     event Liquidation(int indexed price, uint targetAmount, uint actualAmount);
 
+
+    event ErrrorLoggingUint(string description, uint logit);
+    event ErrrorLoggingString(string description, string logit);
+
+
     address public ETHvUSD = 0x0715A7794a1dc8e42615F059dD6e406A6594651A;
     AggregatorV3Interface internal priceFeed = AggregatorV3Interface(ETHvUSD);
 
@@ -36,6 +41,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
     address public constant WETH9 = 0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa;
     IERC20 internal WETHToken = IERC20(WETH9);
+    //https://mumbai.polygonscan.com/address/0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa#readProxyContract
 
     address public constant DAI = 0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F;
     IERC20 internal DAIToken = IERC20(DAI);
@@ -62,10 +68,10 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
 
 // for testing only
-    uint public runCountPerformUpkeep;
-    uint public upkeepRanCount;
-    bool public upkeepNeeded_;
-    bytes public upkeepData_;
+    // uint public runCountPerformUpkeep;
+    // uint public upkeepRanCount;
+    // bool public upkeepNeeded_;
+    // bytes public upkeepData_;
     // int testingPrice = 139000000000;
 
     // address[] public testingUsersLiquidated;
@@ -109,11 +115,8 @@ contract LiquiSwap is AutomationCompatibleInterface {
     function addUser() public {
         require(users[msg.sender].usersIndexPosition == 0, 'user already added');
 
-        uint amountIn = WETHToken.allowance(msg.sender, address(this));
-        WETHToken.transferFrom(msg.sender, address(this), amountIn);
-        contractBalanceWETH += amountIn;
         usersIndex.push(msg.sender);
-        users[msg.sender] = user({usersIndexPosition: usersIndex.length, liquidationPrice: -1, balanceWETH: amountIn, balanceDAI: 0});
+        users[msg.sender] = user({usersIndexPosition: usersIndex.length, liquidationPrice: -1, balanceWETH: 0, balanceDAI: 0});
         emit UserAdded(msg.sender);
     }
 
@@ -153,6 +156,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
         WETHToken.transferFrom(msg.sender, address(this), _amount);
         contractBalanceWETH += _amount;
         users[msg.sender].balanceWETH += _amount;
+        
         emit Deposit(msg.sender, "WETH", _amount);
     }
 
@@ -162,6 +166,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
         require(_amount <= _balance, 'amount > balance');
         WETHToken.transfer(msg.sender, _amount);
         users[msg.sender].balanceWETH -=_amount;
+
         emit Withdrawal(msg.sender, "WETH", _amount);
     }
 
@@ -175,7 +180,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
         uint _balance = getBalanceDAI();
         require(_amount <= _balance, 'amount > balance');
         DAIToken.transfer(msg.sender, _amount);
-        users[msg.sender].balanceWETH -=_amount;
+        users[msg.sender].balanceDAI -=_amount;
         emit Withdrawal(msg.sender, "DAI", _amount);
     }
 
@@ -207,7 +212,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
         
         int _price = getLatestPrice();
 
-        uint liquidationAmount;
+        uint amountIn;
         address _user;
 
         // re-check of condition required
@@ -215,40 +220,32 @@ contract LiquiSwap is AutomationCompatibleInterface {
             _user = address(bytes20(performData[_startPos:_startPos + 20]));
 
             if(_price <= users[_user].liquidationPrice) {
-                liquidationAmount += users[_user].balanceWETH;
+                amountIn += users[_user].balanceWETH;
             }
         }
 
-        if(liquidationAmount > 0) {
+        if(amountIn > 0) {
+            uint amountOut = Liquidate(amountIn);   // returns amount of DAI
+            emit ErrrorLoggingUint("amountLiquidated:", amountOut);
 
-            uint amountLiquidated = Liquidate(liquidationAmount);
-            
-            contractBalanceWETH -= amountLiquidated;
-            contractBalanceDAI += amountLiquidated;
+    // safe to assume always swaps full amount or nothing?
+            if(amountOut > 0) {
+                contractBalanceWETH -= amountIn;
+                contractBalanceDAI += amountOut;
 
-            // update the user account balances
-            if(amountLiquidated == liquidationAmount) {
-                for(uint _startPos; _startPos < performData.length; _startPos += 20) {
-                    if(_price <= users[_user].liquidationPrice) {
-                        _user = address(bytes20(performData[_startPos:_startPos + 20]));
-                        users[_user].balanceDAI += users[_user].balanceWETH;
-                        users[_user].balanceWETH = 0;
-                        users[_user].liquidationPrice = -1;
-                    }
-                }
-            } else {    // partial liquidation. apportion shares of the liquidation
+                // update the user account balances
                 for(uint _startPos; _startPos < performData.length; _startPos += 20) {
                     _user = address(bytes20(performData[_startPos:_startPos + 20]));
-
                     if(_price <= users[_user].liquidationPrice) {
-                        _user = address(bytes20(performData[_startPos:_startPos + 20]));
-                        uint shareOfLiquidation = (amountLiquidated * users[_user].balanceWETH) / liquidationAmount;
+                        uint shareOfLiquidation = (amountOut * users[_user].balanceWETH) / amountIn;
                         users[_user].balanceDAI += shareOfLiquidation;
-                        users[_user].balanceWETH -= shareOfLiquidation;
+                        users[_user].balanceWETH = 0;
+                        users[_user].liquidationPrice = -1; //so no re-trigger
                     }
                 }
             }
-            emit Liquidation(_price, liquidationAmount, amountLiquidated);
+
+            emit Liquidation(_price, amountIn, amountOut);
         }
     }
 
