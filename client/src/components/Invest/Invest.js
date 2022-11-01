@@ -1,24 +1,76 @@
 import classes from "./Invest.module.css";
 import Bitcoin from "../../images/bitcoin.svg";
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ReactTooltip from "react-tooltip";
+import { useSelector } from "react-redux";
+import { ethers} from "ethers";
+import Alert from "../UI/Alert";
+import { ERC20ABI, ERC20ContractAddress, contractAddress } from "../constants";
+
 
 const Invest = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [ethPrice, setEthPrice] = useState('');
+  const [showAlert, setShowAlert] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
+  const contract = useSelector((state) => state.auth.contract);
+  const signer = useSelector((state) => state.auth.signer);
+  const isConnected = useSelector((state) => state.auth.isConnected);
+  const valueRef = useRef();
+  const liquidationValueRef = useRef();
 
-  const getApproval = () => {
-    console.log("approved");
+  useEffect(() => {
+
+    (async function(){
+      if(isConnected){
+
+        let price = await contract.getLatestPrice();
+        price = ethers.utils.formatEther(price);
+        setEthPrice(price);
+      }
+    })();
+
+  }, [isConnected]); 
+
+  const getApproval = async () => {
+
+      if(isApproved) return;
+
+      const wethContract = new ethers.Contract(ERC20ContractAddress, ERC20ABI, signer);
+
+      let ethDeposit = valueRef.current.value;
+      ethDeposit = ethers.utils.parseEther(ethDeposit);
+      const approved = await wethContract.approve(contractAddress, ethDeposit);
+      await approved.wait();
+
+      setIsApproved(true);
+      
   };
 
+  const changeAmountHandler = () => {
+    if(valueRef.current.value === ''){
+      setShowAlert(false);
+    }else{
+      setShowAlert(true);
+    }
 
-  const submitFormHandler = (event) => {
+  };
+
+  const submitFormHandler = async (event) => {
     event.preventDefault();
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
+    let ethValue = ethers.utils.parseEther(valueRef.current.value);
+    let liquidationPrice = ethers.utils.parseEther(liquidationValueRef.current.value);
+
+    
+    await contract.setLiquidationPrice(liquidationPrice, {gasLimit: 60000});
+    const depositWETH = await contract.depositWETH(ethValue);
+    await depositWETH.wait();
+
+
+    setIsLoading(false);
   };
 
   return (
@@ -28,7 +80,7 @@ const Invest = () => {
       </div>
       <div className={classes.investForm}>
         <h1>
-          Current ETH price: <span className={classes.highlight}>$1336.50</span>
+          Current ETH price: <span className={classes.highlight}>{ethPrice ? `$${ethPrice}`: "Loading"}</span>
         </h1>
         <form onSubmit={submitFormHandler}>
           <label className="label">
@@ -37,7 +89,9 @@ const Invest = () => {
           <input
             type="text"
             name="amount"
-            placeholder="Enter amount to be deposit in wei."
+            onChange={changeAmountHandler}
+            ref = {valueRef}
+            placeholder="Enter amount to be deposited"
             className="input input-bordered input-secondary w-full max-w-xs"
             required
           />
@@ -45,21 +99,18 @@ const Invest = () => {
             <span className="label-text">Enter Threshold Value :</span>
           </label>
           <input
-            type="text"
+            type="number"
             name="threshold value"
+            ref = {liquidationValueRef}
             placeholder="Enter threshold value"
             className="input input-bordered input-secondary w-full max-w-xs"
             required
           />
-          <div>
-            <button type = "button"
-              onClick = {getApproval}
-              className={`btn btn-secondary btn-wide ${classes.allow}`}
-            >
-              Allow Liquiswap to use your ETH
-              </button>
-              <i data-for = "information" data-tip = "In order to swap you ETH with a stable coin when a threshold value is reached, liquiswap needs to get approval to use your ETH on your behalf." className="fa-regular fa-circle-info"></i>
-          </div>
+          {showAlert && <div onClick = {getApproval} className = {classes.info}>
+            <div data-for = "information" data-tip = "In order to swap your ETH with a stable coin when a threshold value is reached, liquiswap needs to get approval to use your ETH on your behalf.">
+              <Alert classes = "alert-info" message = {isApproved ? "Approved" :"Allow Liquiswap to use your ETH"}/>
+            </div>
+          </div>}
           <button
             type="submit"
             className={`btn ${classes.investBtn} ${
@@ -72,7 +123,7 @@ const Invest = () => {
           </button>
         </form>
       </div>
-      <ReactTooltip id="information" place="left" effect="solid" />
+      <ReactTooltip id="information" place="top" effect="solid" />
     </div>
   );
 };

@@ -5,7 +5,8 @@ const initialState = {
     isConnected: false,
     accountAddress: null,
     provider: null,
-    signer: null
+    signer: null,
+    contract: null
 }
 
 
@@ -18,7 +19,8 @@ const authSlice = createSlice({
                 isConnected: true,
                 accountAddress: payload.payload.accountAddress,
                 provider: payload.payload.provider,
-                signer: payload.payload.signer
+                signer: payload.payload.signer,
+                contract:payload.payload.contract
             }
         }
     }

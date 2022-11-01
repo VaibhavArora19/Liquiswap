@@ -5,6 +5,8 @@ import {ethers} from "ethers";
 import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "../../store";
 
+import {ABI, contractAddress} from "../constants";
+
 const Navbar = () => {
   const dispatch = useDispatch();
   const isConnected = useSelector((state) => state.auth.isConnected);
@@ -19,15 +21,26 @@ const Navbar = () => {
 
       const accounts = await window.ethereum.request({method:'eth_requestAccounts'})
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer =  provider.getSigner();
+
+      const { chainId } = await provider.getNetwork();
+      if(chainId !== 80001){
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: "0x13881"}],
+        });
+      }
+      const signer =  provider.getSigner();      
+      const contract = new ethers.Contract(contractAddress, ABI, signer);
 
       const accountDetails = {
         accountAddress: accounts[0],
         provider,
-        signer
-      }
-    
+        signer,
+        contract
+      };
+
       dispatch(authActions.connect(accountDetails));
+    
     }
 
   };

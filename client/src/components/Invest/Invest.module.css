@@ -1,5 +1,4 @@
 .invest {
-    margin-top: 7%;
     margin-bottom: 3%;
 }
 
@@ -68,4 +67,10 @@
     100%{
         transform: translateY(2%);
     }
+}
+
+.info {
+    cursor: pointer;
+    margin-top: 20px;
+    width: 325px;
 }
