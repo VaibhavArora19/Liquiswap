@@ -10,27 +10,14 @@ import { ERC20ABI, ERC20ContractAddress, contractAddress } from "../constants";
 
 const Invest = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [ethPrice, setEthPrice] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const contract = useSelector((state) => state.auth.contract);
   const signer = useSelector((state) => state.auth.signer);
-  const isConnected = useSelector((state) => state.auth.isConnected);
+  const ethPrice = useSelector((state) => state.auth.latestPrice);
   const valueRef = useRef();
   const liquidationValueRef = useRef();
 
-  useEffect(() => {
-
-    (async function(){
-      if(isConnected){
-
-        let price = await contract.getLatestPrice();
-        price = ethers.utils.formatEther(price);
-        setEthPrice(price);
-      }
-    })();
-
-  }, [isConnected]); 
 
   const getApproval = async () => {
 
@@ -87,7 +74,7 @@ const Invest = () => {
             <span className="label-text">Enter Amount :</span>
           </label>
           <input
-            type="text"
+            type="number"
             name="amount"
             onChange={changeAmountHandler}
             ref = {valueRef}

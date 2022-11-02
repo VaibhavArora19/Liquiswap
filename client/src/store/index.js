@@ -6,7 +6,8 @@ const initialState = {
     accountAddress: null,
     provider: null,
     signer: null,
-    contract: null
+    contract: null,
+    latestPrice: 0
 }
 
 
@@ -22,6 +23,9 @@ const authSlice = createSlice({
                 signer: payload.payload.signer,
                 contract:payload.payload.contract
             }
+        },
+        latestPrice(state, payload){
+           state.latestPrice = payload.payload;
         }
     }
 })

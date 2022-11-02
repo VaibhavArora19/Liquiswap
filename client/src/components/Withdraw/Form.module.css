@@ -1,0 +1,39 @@
+.withdrawForm {
+    display: inline-block;
+    margin-top: 7%;
+    margin-left: 15%;
+    width: 70%;
+    background-color: rgb(17 24 39);
+    border-radius: 20px;
+}
+
+.withdrawForm form {
+    margin-top: 3%;
+    margin-left: 13%;
+}
+
+.withdrawForm span {
+    text-align: center;
+    color: white;
+}
+
+.withdrawBtn {
+    margin-left: 9%;
+    margin-top: 7%;
+    margin-bottom: 5%;
+}
+
+.allow {
+    margin-left: 8%;
+    margin-top: 5%;
+    width: 500px;
+}
+
+.options {
+    width: 320px;
+}
+
+.withdrawForm h3{
+    margin-top: 3px;
+    margin-left: 5px;
+}

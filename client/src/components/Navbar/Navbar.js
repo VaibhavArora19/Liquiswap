@@ -38,8 +38,10 @@ const Navbar = () => {
         signer,
         contract
       };
-
+      let wethPrice = await contract.getLatestPrice();
+      wethPrice = ethers.utils.formatEther(wethPrice);
       dispatch(authActions.connect(accountDetails));
+      dispatch(authActions.latestPrice(wethPrice));
     
     }
 

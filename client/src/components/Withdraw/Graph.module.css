@@ -1,0 +1,29 @@
+.graph img{
+    width:40px;
+    border-radius: 20px;
+    display: inline-block;
+    position: relative;
+    bottom: 7px;
+    left: 5px;
+}
+
+.logo {
+    display: inline-block;
+    width: 500px;
+}
+
+.logo h1, h2{
+    display: inline-block;
+    margin: 0 5%;
+    font-size: 1.8rem;
+    margin-top: 3%;
+}
+.highlight {
+   color:white;
+    margin-left: 2%;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-top: 0;
+    padding-top: 0;
+    margin-bottom: 2%;
+}
