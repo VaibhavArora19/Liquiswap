@@ -28,11 +28,6 @@ contract LiquiSwap is AutomationCompatibleInterface {
     event Withdrawal(address indexed user, string token, uint amount);
     event Liquidation(int indexed price, uint targetAmount, uint actualAmount);
 
-
-    event ErrrorLoggingUint(string description, uint logit);
-    event ErrrorLoggingString(string description, string logit);
-
-
     address public ETHvUSD = 0x0715A7794a1dc8e42615F059dD6e406A6594651A;
     AggregatorV3Interface internal priceFeed = AggregatorV3Interface(ETHvUSD);
 
@@ -49,10 +44,9 @@ contract LiquiSwap is AutomationCompatibleInterface {
     // For this example, we will set the pool fee to 0.3%.
     uint24 public constant poolFee = 3000;
 
-    address owner;
+    mapping(address => bool) public owners;     // owner address => bool
+    uint public numOwners;
 
-    uint contractBalanceWETH;
-    uint contractBalanceDAI;
 
     /// @dev keeps track of users and their liquidation/stop prices
     /// mapping for lookups, array for iterating
@@ -69,28 +63,31 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
 // for testing only
     int public priceDropAmount; // for testing can simulate a big drop in price
-    // uint public runCountPerformUpkeep;
-    // uint public upkeepRanCount;
-    // bool public upkeepNeeded_;
-    // bytes public upkeepData_;
-    // int testingPrice = 139000000000;
-
-    // address[] public testingUsersLiquidated;
-    // int[] public testingPricesLiquidated;
-    /// end  // for testing only
-    // performUpkeep test performData
-    // 0x4b0897b0513fdc7c541b6d9d7e929c4e5364d2db14723a09acff6d2a60dcdf7aa4aff308fddc160cca35b7d915458ef540ade6068dfe2f44e8fa733c03c6fced478cbbc9a4fab34ef9f40767739d1ff7
 // testing
 
     constructor () {
-        owner = msg.sender;
+        owners[msg.sender] = true;
+        ++numOwners;
         // add dummy first user so it's certain a userIndexPosition test returning 0 means user doesn't exist in mapping and corresponding array
         usersIndex.push(address(0));
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner, "not owner");
+    modifier onlyOwners {
+        require(owners[msg.sender], "only owners");
         _;
+    }
+
+
+    function addOwner(address _newOwner) external onlyOwners {
+        owners[_newOwner] = true;
+        ++numOwners;
+    }
+
+    function delOwner(address _delOwner) external onlyOwners {
+        require(numOwners > 1, "can't del last owner");
+        require(owners[_delOwner], "not an owner");
+        owners[_delOwner] = false;
+        --numOwners;
     }
 
 // ---> get latest price for ETH/USD - this can be replaced by something else
@@ -114,7 +111,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
     //  : public while testing
 
     function addUser() public {
-        require(users[msg.sender].usersIndexPosition == 0, 'user already added');
+        require(users[msg.sender].usersIndexPosition == 0, "user already added");
 
         usersIndex.push(msg.sender);
         users[msg.sender] = user({usersIndexPosition: usersIndex.length, liquidationPrice: -1, balanceWETH: 0, balanceDAI: 0});
@@ -123,20 +120,30 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
     
     /// @dev change the liquidation price for an existing user
-    // @ todo: secure who can execute function
     function setLiquidationPrice(int _liquidationPrice) external {
-        require(users[msg.sender].usersIndexPosition != 0, 'not a user');
-        require(users[msg.sender].balanceWETH >= 0, 'no balance');
+        require(users[msg.sender].usersIndexPosition != 0, "not a user");
         users[msg.sender].liquidationPrice = _liquidationPrice;
     }
 
 
-    // @ todo: secure who can execute function
+    /// @dev returns the liquidation price for a user
+    function getLiquidationPrice() external view returns (int) {
+        return users[msg.sender].liquidationPrice;
+    }
+
+
+    /// @dev returns the liquidation price for a user
+    function getLiquidationPrice(address _addr) external view returns (int) {
+        return users[_addr].liquidationPrice;
+    }
+
+
+
     //  : public while testing
     function delUser() public {
-        require(users[msg.sender].usersIndexPosition != 0, 'not a user');
-        require(users[msg.sender].balanceWETH == 0, 'WETH balance > 0');
-        require(users[msg.sender].balanceDAI == 0, 'DAI balance > 0');
+        require(users[msg.sender].usersIndexPosition != 0, "not a user");
+        require(users[msg.sender].balanceWETH == 0, "WETH balance > 0");
+        require(users[msg.sender].balanceDAI == 0, "DAI balance > 0");
         uint _pos = users[msg.sender].usersIndexPosition;
         usersIndex[_pos] = usersIndex[usersIndex.length -1];
         usersIndex.pop();
@@ -150,24 +157,29 @@ contract LiquiSwap is AutomationCompatibleInterface {
     }
 
 
-    function depositWETH(uint _amount) external {
+    function depositWETH(uint _amount) public {
         if(users[msg.sender].usersIndexPosition == 0) addUser();
         require(_amount <= WETHToken.allowance(msg.sender, address(this)), 'amount > approval');
 
         WETHToken.transferFrom(msg.sender, address(this), _amount);
-        contractBalanceWETH += _amount;
         users[msg.sender].balanceWETH += _amount;
-        
+
         emit Deposit(msg.sender, "WETH", _amount);
     }
 
 
+    function depositWETH(uint _amount, int _liquidationPrice) external {
+        depositWETH(_amount);
+        users[msg.sender].liquidationPrice = _liquidationPrice;
+    }
+    
+
     function withdrawWETH(uint _amount) external {
         uint _balance = getBalanceWETH();
-        require(_amount <= _balance, 'amount > balance');
+        require(_amount <= _balance, "amount > balance");
         WETHToken.transfer(msg.sender, _amount);
         users[msg.sender].balanceWETH -=_amount;
-
+        
         emit Withdrawal(msg.sender, "WETH", _amount);
     }
 
@@ -179,7 +191,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
     function withdrawDAI(uint _amount) external {
         uint _balance = getBalanceDAI();
-        require(_amount <= _balance, 'amount > balance');
+        require(_amount <= _balance, "amount > balance");
         DAIToken.transfer(msg.sender, _amount);
         users[msg.sender].balanceDAI -=_amount;
         emit Withdrawal(msg.sender, "DAI", _amount);
@@ -200,7 +212,8 @@ contract LiquiSwap is AutomationCompatibleInterface {
         int _price = getLatestPrice();
 
         for(uint i = 1; i < usersIndex.length; ++i) {
-            if(_price <= users[usersIndex[i]].liquidationPrice) {
+            user memory _user = users[usersIndex[i]];
+            if(_price <= _user.liquidationPrice && _user.balanceWETH > 0) {
                 performData = abi.encodePacked(performData, usersIndex[i]);
             }
         }
@@ -209,6 +222,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
 
     /// @dev each step rechecks the trigger condition as function can be called 
+    /// checkUpkeep excludes accounts with a 0 balance but not necessary to re-check that here
     function performUpkeep(bytes calldata performData) external override {
         
         int _price = getLatestPrice();
@@ -227,12 +241,9 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
         if(amountIn > 0) {
             uint amountOut = Liquidate(amountIn);   // returns amount of DAI
-            emit ErrrorLoggingUint("amountLiquidated:", amountOut);
 
-    // safe to assume always swaps full amount or nothing?
+            // safe to assume always swaps full amount or nothing?
             if(amountOut > 0) {
-                contractBalanceWETH -= amountIn;
-                contractBalanceDAI += amountOut;
 
                 // update the user account balances
                 for(uint _startPos; _startPos < performData.length; _startPos += 20) {
@@ -241,7 +252,6 @@ contract LiquiSwap is AutomationCompatibleInterface {
                         uint shareOfLiquidation = (amountOut * users[_user].balanceWETH) / amountIn;
                         users[_user].balanceDAI += shareOfLiquidation;
                         users[_user].balanceWETH = 0;
-                        users[_user].liquidationPrice = -1; //so no re-trigger
                     }
                 }
             }
@@ -256,7 +266,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
     /// @dev The calling address must approve this contract to spend at least `amountIn` worth of its DAI for this function to succeed.
     /// @param amountIn The exact amount of DAI that will be swapped for WETH9.
     /// @return amountOut The amount of WETH9 received.
-    function Liquidate(uint256 amountIn) public returns (uint256 amountOut) {
+    function Liquidate(uint256 amountIn) internal returns (uint256 amountOut) {
 // todo: secure so can only be run internally
 
         // Approve the router to spend WETH.
@@ -287,33 +297,35 @@ contract LiquiSwap is AutomationCompatibleInterface {
     /* 
     *   testing functions
     */
-
-    // now using functiondepositWETH
-    // function transferToContract(uint256 amountIn) external {
-    //     // msg.sender must approve this contract
-
-    //     // Transfer the specified amount of DAI to this contract.
-    //     WETHToken.transferFrom(msg.sender, address(this), amountIn);
-    // }
-
-
-    function setPriceDrop(int _priceDrop) external {
+    /// @dev - used to simulate a drop in the price of ETH for testing
+    /// _priceDrop is subtracted from the price of ETH returned by getLatestPrice()
+    function setPriceDrop(int _priceDrop) external onlyOwners {
         priceDropAmount = _priceDrop;
     }
 
-    /// @dev - for testing - get all tokens back out of the contract
-    // note : use when finished with the contract. doesn't update user balances
-    function sendWETH() external{
+
+    /// @dev - get all tokens back out of the contract after finished testing
+    function sendWETH() external onlyOwners {
         uint256 amt = WETHToken.balanceOf(address(this));
         WETHToken.transfer(msg.sender, amt);
     }
 
-    function sendDAI() external{
+
+    /// @dev - get all tokens back out of the contract after finished testing
+    function sendDAI() external onlyOwners {
         uint256 amt = DAIToken.balanceOf(address(this));
         DAIToken.transfer(msg.sender, amt);
     }
 
+
+    /// @dev returns contract's WETH allowance approved by msg.sender
     function getWETHAllowance() external view returns (uint) {
-            return WETHToken.allowance(msg.sender, address(this));
+        return WETHToken.allowance(msg.sender, address(this));
+    }
+
+
+    /// @dev returns contract's WETH allowance approved by _addr
+    function getWETHAllowance(address _addr) external view returns (uint) {
+        return WETHToken.allowance(_addr, address(this));
     }
 }
