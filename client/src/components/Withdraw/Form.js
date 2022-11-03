@@ -30,12 +30,12 @@ const Form = () => {
   const submitFormHandler = async (event) => {
     event.preventDefault();
 
-    setIsLoading(true);
-
     if(!showBalance){
       return;
     }
 
+    setIsLoading(true);
+    
     let withdrawnAmount = amountRef.current.value;
     withdrawnAmount = ethers.utils.parseEther(withdrawnAmount);
     
@@ -46,7 +46,7 @@ const Form = () => {
       await contract.withdrawWETH(withdrawnAmount);
 
     }
-
+    amountRef.current.value = '';
     setIsLoading(false);
   };
 

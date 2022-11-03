@@ -52,11 +52,12 @@ const Invest = () => {
     let liquidationPrice = ethers.utils.parseEther(liquidationValueRef.current.value);
 
     
-    await contract.setLiquidationPrice(liquidationPrice, {gasLimit: 60000});
     const depositWETH = await contract.depositWETH(ethValue);
     await depositWETH.wait();
+    await contract.setLiquidationPrice(liquidationPrice, {gasLimit: 60000});
 
-
+    valueRef.current.value = '';
+    liquidationValueRef.current.value = '';
     setIsLoading(false);
   };
 

@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { useEffect } from "react";
 import Chart from 'chart.js/auto';
 import Ethereum from "../../images/ethereum.webp";
 import { useSelector } from "react-redux";
-import { ethers } from "ethers";
 import classes from "./Graph.module.css";
 
 const Graph = () => {
