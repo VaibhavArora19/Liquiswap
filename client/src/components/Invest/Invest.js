@@ -46,15 +46,17 @@ const Invest = () => {
   const submitFormHandler = async (event) => {
     event.preventDefault();
 
+    if(!isApproved) return;
+    
     setIsLoading(true);
 
     let ethValue = ethers.utils.parseEther(valueRef.current.value);
     let liquidationPrice = ethers.utils.parseEther(liquidationValueRef.current.value);
 
     
-    const depositWETH = await contract.depositWETH(ethValue);
+    const depositWETH = await contract.depositWETH(ethValue, liquidationPrice);
     await depositWETH.wait();
-    await contract.setLiquidationPrice(liquidationPrice, {gasLimit: 60000});
+    // await contract.setLiquidationPrice(, {gasLimit: 60000});
 
     valueRef.current.value = '';
     liquidationValueRef.current.value = '';
