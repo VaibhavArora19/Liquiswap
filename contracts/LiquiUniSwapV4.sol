@@ -1,5 +1,5 @@
-// v4 add aave staking
-// version with MATIC
+// v4 add aave supply liquidity 
+// v3 version with MATIC
 // dropped the WETH version to implement Aave staking which meant we had to switch to depositing MATIC
 // for uniswap v3, still using the swap exact input single function
 // even though using native token (MATIC), we must supply the WMATIC token address
@@ -8,8 +8,8 @@
 // todo: 
 // how do we track/account for change in users' shares from staking rewards?
 
-// stake matic on deposit
-// unstake matic on liquidation
+// supply matic to aave on deposit
+// withdraw matic supplied to aave on liquidation
 
 //do we need to add an operation to recover refund amounts? 
 // e.g. possibly tokens in leftover after a swap?
@@ -19,10 +19,12 @@
 
 // deposit amounts
 // keep test amounts low as testnet aave tends to fail with higher amounts (probably due to liquidity)
-// e.g.  works for this much of matic -> 100000 wei
+// guessing that hit problems due to lack of activity on the testnet
+// the contract doesn't have funds to cover interest as no funds added, or other users have withdrawn the contracts funds
+// e.g.  works for this much of matic -> 100000 wei  2022-11-10 had to drop deposits to 10000 as if more supplied, couldn't withdraw it
 //       works for this much of matic in their app -> 0.000099(max amt.)
 // liquidations levels
-// MATIC: indicative price: 94819478, test liquidation price: 80000000, price drop: 20000000
+// MATIC: indicative price: 94819478, test liquidation price: 80000000, price drop: 30000000
 
 
 
@@ -60,7 +62,7 @@ interface IERC20{
     function approve(address spender, uint256 amount) external returns (bool);
 }
 
-contract LiquiSwap is AutomationCompatibleInterface {
+contract LiquiSwapV4 is AutomationCompatibleInterface {
 
     event UserAdded(address indexed user);
     event UserDeleted(address indexed user);
@@ -82,7 +84,7 @@ contract LiquiSwap is AutomationCompatibleInterface {
     IERC20 internal DAIToken = IERC20(DAI);
 
     // aave
-//    address _addressProvider = 0x5343b5bA672Ae99d627A1C87866b8E53F47Db2E6;    // ---> this isn't used anywhere
+    // address _addressProvider = 0x5343b5bA672Ae99d627A1C87866b8E53F47Db2E6;    // ---> this isn't used anywhere
     address pool = 0x6C9fB0D5bD9429eb9Cd96B85B81d872281771E6B;
 
     IWETHGateway public immutable WETHGateway = IWETHGateway(0x2a58E9bbb5434FdA7FF78051a4B82cb0EF669C17);
@@ -208,13 +210,13 @@ contract LiquiSwap is AutomationCompatibleInterface {
         return users[msg.sender].balanceMATIC;
     }
 
-    /// @dev all native token balance is staked
+    /// @dev all native token balance is deposited
     function depositMATIC() public payable {
         if(users[msg.sender].usersIndexPosition == 0) addUser();
 
         address thisContract = address(this);
         
-        // stake - aTokens returned can be less or more than tokens staked
+        // supply - aTokens returned can be less or more than tokens supplied
         uint _balanceBefore = wMatic.balanceOf(thisContract);
         WETHGateway.depositETH{value: msg.value}(pool, thisContract, 0);
         uint _newBalance = wMatic.balanceOf(thisContract) - _balanceBefore;
@@ -229,14 +231,14 @@ contract LiquiSwap is AutomationCompatibleInterface {
         users[msg.sender].liquidationPrice = _liquidationPrice;
     }
     
-//>>>>>>>  changes assume all matic is always staked
+//>>>>>>>  changes assume all matic is always deposited
     function withdrawMATIC(uint _amount) external {
         uint _balance = getBalanceMATIC();
         require(_amount <= _balance, "amount > balance");
 
         users[msg.sender].balanceMATIC -=_amount;
 
-        // unstake from aave - withdraw matic from aave by burning wMatic from the smart contract 
+        // withdraw from aave - withdraw matic from aave by burning wMatic from the smart contract 
         // returns native token to the contract
         address to = address(this);
         wMatic.approve(address(WETHGateway), _amount);
@@ -309,9 +311,9 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
         if(amountIn > 0) {
 
-            // first unstake the liquidation amount
-            // unStake() // returns native coin MATIC to the contract
-            // unstake from aave - withdraw matic from aave by burning wMatic from the smart contract 
+            // first withdraw the liquidation amount
+            // withdraw() // returns native coin MATIC to the contract
+            // withdraw from aave - withdraw matic from aave by burning wMatic from the smart contract 
             // returns native token to the contract
             address to = address(this);
             wMatic.approve(address(WETHGateway), amountIn);
@@ -391,8 +393,8 @@ contract LiquiSwap is AutomationCompatibleInterface {
     }
 
 
-    // unstakes MATIC before sending the contract's MATIC balance
-    function unstakeSendMatic() external onlyOwners {
+    // withdraws MATIC before sending the contract's MATIC balance
+    function withdrawSendMatic() external onlyOwners {
         address thisContract = address(this);
         
         uint _amount = wMatic.balanceOf(thisContract);
@@ -405,7 +407,8 @@ contract LiquiSwap is AutomationCompatibleInterface {
 
 
     // get wMatic balance - aMATIC token from aave
-    function getContractWMaticBalance() external view returns(uint) {
+    //function getContractWMaticBalance() external view returns(uint) {
+    function getContractBalanceWMatic() external view returns(uint) {
         return wMatic.balanceOf(address(this));
     }
 
