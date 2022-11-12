@@ -1,4 +1,9 @@
-require("dotenv").config();
+// make sure to 
+// update the contract address to target contract
+// use the private key for the test account used with the contract corresponding to msg.sender for supplyLiquidity
+// run script : if you run transfers from the script, note how the actual amount transferred is rarely correct. usually + or - 1
+
+require("dotenv").config();     // need .env file for STAGING_ALCHEMY_KEY and PRIVATE_KEY
 const {ethers} = require("ethers");
 
 const contractAddress = "0x29225C5BAD7C66218f66FedEd3eC72c965D3C41f"    //contract to approve
