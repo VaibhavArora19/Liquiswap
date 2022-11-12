@@ -12,7 +12,7 @@
 }
 
 .title h1{
-    margin-top: 12%;
+    margin-top: 14%;
     padding-top: 0;
     font-size: 1.4rem;
     font-weight: 600;
@@ -26,17 +26,17 @@
 }
 
 .options {
-    width: 160px;
-    margin-left: 5%;
+    width: 350px;
+    margin-right: 5%;
 }
 
 .options h3{
     display: inline-block;
     margin-left: 14%;
-    margin-top: 14%;
-    font-size: 1rem;
+    margin-top: 7%;
+    font-size: 1.1rem;
     text-align: center;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .btn {

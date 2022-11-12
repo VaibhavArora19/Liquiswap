@@ -1,6 +1,6 @@
 import classes from "./Navbar.module.css";
 import Button from "../UI/Button";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import {ethers} from "ethers";
 import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "../../store";
@@ -31,7 +31,12 @@ const Navbar = () => {
       
   }, [isConnected]);
 
- 
+  const activeStyle = {
+    background: "linear-gradient(31deg, rgba(2,0,36,1) 0%, rgba(37,240,67,0.99) 0%, rgba(12,228,245,1) 89%)",
+    webkitBackgroundClip: "text",
+    webkitTextFillColor: "transparent"
+  }
+
   const connectWalletHandler = async () => {
 
     if(!isConnected) {
@@ -72,15 +77,18 @@ const Navbar = () => {
           <h1>LIQUISWAP</h1>
         </div></Link>
         <div className={classes.options}>
-          <Link to = "/invest">
+          <NavLink to = "/invest" style = {({isActive}) => isActive ? activeStyle : undefined}>
             <h3>Invest</h3>
-          </Link>
-          <Link to = "/withdraw">
+          </NavLink>
+          <NavLink to = "/withdraw" style = {({isActive}) => isActive ? activeStyle : undefined}>
             <h3>Withdraw</h3>
-          </Link>
+          </NavLink>
+          <NavLink to = "/activity" style = {({isActive}) => isActive ? activeStyle : undefined}>
+            <h3>Activity</h3>
+          </NavLink>
         </div>
         <div className = {classes.btn}>
-          <Button classes = "btn-secondary btn-active" label = {isConnected ? `${accountAddress.substr(0, 5)}...${accountAddress.substr(37,42)}` :"Connect your Wallet"} onClick = {connectWalletHandler}/>
+          <Button classes = "btn-secondary btn-active" label = {isConnected ? `${accountAddress.substr(0, 5)}...${accountAddress.substr(37,42)}` :"Connect Wallet"} onClick = {connectWalletHandler}/>
         </div>
       </div>
     </div>
