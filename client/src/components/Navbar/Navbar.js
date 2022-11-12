@@ -4,19 +4,36 @@ import { Link } from "react-router-dom";
 import {ethers} from "ethers";
 import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "../../store";
-
-import {ABI, contractAddress} from "../constants";
+import { useEffect } from "react";
+import {ABI, contractAddress, ERC20ABI, ERC20ContractAddress,} from "../constants";
 
 const Navbar = () => {
   const dispatch = useDispatch();
   const isConnected = useSelector((state) => state.auth.isConnected);
   const accountAddress = useSelector((state) => state.auth.accountAddress);
+  const signer = useSelector((state) => state.auth.signer);
 
+  useEffect(() => {
+    let aWMaticContract;
+
+    (async function(){
+     
+      if(signer){
+        aWMaticContract = new ethers.Contract(ERC20ContractAddress, ERC20ABI, signer);
+      }else{
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        aWMaticContract = new ethers.Contract(ERC20ContractAddress, ERC20ABI, signer);
+      }
+      
+      dispatch(authActions.createErc20(aWMaticContract));
+    })()
+      
+  }, [isConnected]);
 
  
   const connectWalletHandler = async () => {
 
-  
     if(!isConnected) {
 
       const accounts = await window.ethereum.request({method:'eth_requestAccounts'})

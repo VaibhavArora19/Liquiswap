@@ -7,9 +7,9 @@ const initialState = {
     provider: null,
     signer: null,
     contract: null,
-    latestPrice: 0
+    latestPrice: 0,
+    erc20Contract: null
 }
-
 
 const authSlice = createSlice({
     name: 'auth',
@@ -26,8 +26,12 @@ const authSlice = createSlice({
         },
         latestPrice(state, payload){
            state.latestPrice = payload.payload;
+        },
+        createErc20(state, data){
+            state.erc20Contract = data.payload;
         }
-    }
+    },
+
 })
 
 const store = configureStore({

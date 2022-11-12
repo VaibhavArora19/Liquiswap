@@ -15,9 +15,9 @@ const Stat = () => {
       (async function(){
         
         if(isConnected){
-          let blnc = await contract.getBalanceWETH();
-          let wBalance = await contract.getContractBalanceWETH();
-          let dBalance = await contract.getContractBalanceDAI();
+          let blnc = await contract.getBalanceMATIC();
+          let wBalance = await contract.getContractBalanceMATIC();
+          let dBalance = await contract.getBalanceDAI();
           setBalance(ethers.utils.formatEther(blnc));
           setWethBalance(ethers.utils.formatEther(wBalance));
           setDaiBalance(ethers.utils.formatEther(dBalance));
@@ -33,14 +33,14 @@ const Stat = () => {
       </div>
       <div className="stat-title">Liquidity</div>
       <div className="stat-value">{balance ? balance : "Loading"}</div>
-      <div className="stat-desc">Your wETH balance</div>
+      <div className="stat-desc">Your MATIC locked</div>
     </div>
     
     <div className="stat">
       <div className="stat-figure text-secondary">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
       </div>
-      <div className="stat-title">Total WETH locked</div>
+      <div className="stat-title">Total MATIC locked</div>
       <div className="stat-value">{wethBalance ? wethBalance : "Loading"}</div>
       <div className="stat-desc">↗︎ 400 (22%)</div>
     </div>

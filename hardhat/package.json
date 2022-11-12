@@ -1,0 +1,12 @@
+{
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "hardhat": "^2.12.2"
+  },
+  "dependencies": {
+    "@aave/core-v3": "^1.16.2",
+    "@chainlink/contracts": "^0.5.1",
+    "@openzeppelin/contracts": "^4.8.0",
+    "@uniswap/v3-periphery": "^1.4.3"
+  }
+}
