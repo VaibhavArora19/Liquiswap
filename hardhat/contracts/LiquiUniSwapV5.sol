@@ -7,8 +7,6 @@
 // even though using native token (MATIC), we must supply the WMATIC token address
 // guessing that works by wrapping the token behind the scenes for us
 
-// todo: 
-// how do we track/account for change in users' shares from staking rewards?
 
 // supply matic to aave on deposit
 // withdraw matic supplied to aave on liquidation
@@ -22,7 +20,7 @@
 
 // deposit amounts
 // keep test amounts low as testnet aave tends to fail with higher amounts (probably due to liquidity)
-// don't test withdrawLiquidity with 1 wei. It tends to fail when something higher would work. Possibly due to +/- issue
+// don't test withdrawLiquidity with 1 wei. It seems to always fail when something higher would work. Possibly due to +/- issue
 // if withdrawLiquidity tests are failing, try adding more liquidity to the Aave aToken contract so it has enough MATIC to pay out
 // guessing that hit problems due to lack of activity on the testnet
 // the contract doesn't have funds to cover interest as no funds added, or other users have withdrawn the contracts funds
@@ -112,7 +110,6 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
         uint usersIndexPosition;
         int liquidationPrice;
         uint sharesOfLiquidation;
-        uint balanceMATIC;
         uint balanceDAI;
     }
 
@@ -179,7 +176,7 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
         require(users[msg.sender].usersIndexPosition == 0, "user already added");
 
         usersIndex.push(msg.sender);
-        users[msg.sender] = user({usersIndexPosition: usersIndex.length, liquidationPrice: -1, sharesOfLiquidation: 0, balanceMATIC: 0, balanceDAI: 0});
+        users[msg.sender] = user({usersIndexPosition: usersIndex.length, liquidationPrice: -1, sharesOfLiquidation: 0, balanceDAI: 0});
         emit UserAdded(msg.sender);
     }
 
@@ -206,7 +203,6 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
     //  : public while testing
     function delUser() public {
         require(users[msg.sender].usersIndexPosition != 0, "not a user");
-        require(users[msg.sender].balanceMATIC == 0, "MATIC balance > 0");
         require(users[msg.sender].balanceDAI == 0, "DAI balance > 0");
         uint _pos = users[msg.sender].usersIndexPosition;
         usersIndex[_pos] = usersIndex[usersIndex.length -1];
@@ -263,20 +259,31 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
 
     // transfer can be used after supplyLiquidityUser() and the user has approved this contract 
     // transfer _amount aTokens from msg.sender to contract
-    function transferAaveWMATIC(uint _amount) public {
+    function transferAaveWMATIC(uint _amount) private {
         AaveWMatic.transferFrom(msg.sender, address(this), _amount);
     }
 
     
     // transfer msg.sender's balanceOf aTokens to contract
-    function transferAaveWMATIC() public {
+    function transferAaveWMATIC() private {
         uint _balance = AaveWMatic.balanceOf(msg.sender);
         transferAaveWMATIC(_balance);
     }
 
+
+    // check if contract has an allowance for the user's aTokens
+    // the user can choose to have the contract only liquidate the approval amount of their balance
+    function isApproved() external view returns (bool) {
+        return isApproved(msg.sender);
+    }
+    
+    function isApproved(address _user) public view returns (bool) {
+        return getAaveWMATICAllowance(_user) > 0;
+    }
+
     
     // send aTokens back to AaveWMATIC contract to get back MATIC
-    function burnAaveWMATIC(uint _amount) public {
+    function burnAaveWMATIC(uint _amount) private {
         uint256 balance = AaveWMatic.balanceOf(address(this));
         require(_amount <= balance, "amount > balance");
 
@@ -299,11 +306,6 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
     }
 
 
-    function getBalanceMATIC() public view returns (uint) {
-        return users[msg.sender].balanceMATIC;
-    }
-
-
     function getBalanceAaveWMATIC() public view returns (uint) {
         return AaveWMatic.balanceOf(msg.sender);
     }
@@ -316,31 +318,37 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
 
     /// @dev returns contract's aWMATIC allowance approved by msg.sender
     function getAaveWMATICAllowance() public view returns (uint) {
-         return AaveWMatic.allowance(msg.sender, address(this));
+         return getAaveWMATICAllowance(msg.sender);
     }
 
-    // get the contract's allowance of aToken for _addr
-    function getAaveWMATICAllowanceAddr(address _addr) public view returns (uint) {
+
+    /// @dev returns contract's aWMATIC allowance approved by _addr
+    function getAaveWMATICAllowance(address _addr) public view returns (uint) {
          return AaveWMatic.allowance(_addr, address(this));
     }
 
 
-    // get wMatic balance - aave aToken
+    /// @dev returns the contract's aave Token wMatic balance
     function getContractBalanceAaveWMATIC() public view returns(uint) {
         return AaveWMatic.balanceOf(address(this));
     }
 
 
+    /// @dev returns the contract's native token balance
     function getContractBalanceMATIC() public view returns(uint256){
         return address(this).balance;
     }
 
-
+    /// @dev returns the contract's DAI token balance
     function getContractBalanceDAI() public view returns(uint256){
         return DAIToken.balanceOf(address(this));
     }
 
 
+    /// @dev determine which accounts meet the criteria for liquidation
+    /// account liquidated if native token price drops below the user's liquidation price
+    /// and they have a non zero balance of aave aToken, and they have approved this contract to spend that balance
+    /// concatenate the address into a performData to be used by performUpkeep
     function checkUpkeep(bytes calldata checkData) external view override returns (bool upkeepNeeded, bytes memory performData) {
         int _price = getLatestPrice();
 
@@ -349,7 +357,7 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
             user memory _user = users[_userAddr];
             if(_price <= _user.liquidationPrice) {
                 uint _balance = getBalanceAaveWMaticAddr(_userAddr);
-                if( _balance > 0 && _balance <= getAaveWMATICAllowanceAddr(_userAddr)) {
+                if( _balance > 0 && isApproved(_userAddr)) {
                     performData = abi.encodePacked(performData, _userAddr);
                 }
             }
@@ -358,8 +366,10 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
     }
 
 
-    /// @dev each step rechecks the trigger condition as function can be called 
-    /// checkUpkeep excludes accounts with a 0 balance but not necessary to re-check that here
+    /// @dev liquidate positions of user addresses passed in performData
+    /// the users' aTokens are tranferred to the contract and their share/proportion of total aTokens
+    /// is the share/proportion of the total DAI after the aTokens are convertered back to 
+    /// native tokens and the native tokens swapped for stable coin (DAI)
     function performUpkeep(bytes calldata performData) external override {
         
         int _price = getLatestPrice();
@@ -367,18 +377,23 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
         uint amountIn;
         address _userAddr;
 
-        uint totalAaveTokens;
-
-        // re-check of condition required
+        // re-check of conditions required
         for(uint _startPos; _startPos < performData.length; _startPos += 20) {
             _userAddr = address(bytes20(performData[_startPos:_startPos + 20]));
 
             if(_price <= users[_userAddr].liquidationPrice) {
                 uint _balance = getBalanceAaveWMaticAddr(_userAddr);
-                if( _balance > 0 && _balance <= getAaveWMATICAllowanceAddr(_userAddr)) {
-                    // transfer users aTokens to this contract
+                uint _allowance = getAaveWMATICAllowance(_userAddr);
+                if( _balance > 0 && _allowance > 0) {
+                    // transfer the balance or allowance amount of user's aTokens to this contract. whichever is smaller
+                    uint _transferAmount;
+                    if(_balance <= _allowance) {
+                        _transferAmount = _balance;
+                    } else {
+                        _transferAmount = _allowance;
+                    }
                     uint _contractBalanceBefore = getContractBalanceAaveWMATIC();
-                    AaveWMatic.transferFrom(_userAddr, address(this), _balance);
+                    AaveWMatic.transferFrom(_userAddr, address(this), _transferAmount);
                     uint _actual = getContractBalanceAaveWMATIC() - _contractBalanceBefore;
                     
                     users[_userAddr].sharesOfLiquidation = _actual;   // the user's share of total
@@ -389,13 +404,13 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
 
         if(amountIn > 0) {
             // note the change in the contract's MATIC balance before and after burning user's aTokens
-            //burn contract's aTokens for native token (MATIC)
+            // burn contract's aTokens for native token (MATIC)
             uint _contractBalanceBefore = getContractBalanceMATIC();
             AaveWMatic.approve(address(WETHGateway), amountIn);
             WETHGateway.withdrawETH(pool, amountIn, address(this));
             uint _actual = getContractBalanceMATIC() - _contractBalanceBefore;
 
-            // swap native token (MATIC) for DAI
+            // swap native token MATIC for DAI
             uint amountOut = Liquidate(_actual);  
 
             // safe to assume always swaps full amount or nothing?
@@ -422,7 +437,7 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
     /// @dev The calling address must approve this contract to spend at least `amountIn` worth of its DAI for this function to succeed.
     /// @param amountIn The exact amount of DAI that will be swapped for WETH9.
     /// @return amountOut The amount of WETH9 received.
-    function Liquidate(uint256 amountIn) internal returns (uint256 amountOut) {
+    function Liquidate(uint256 amountIn) private returns (uint256 amountOut) {
 // todo: secure so can only be run internally
 
         // Approve the router to spend WETH.
@@ -455,90 +470,86 @@ contract LiquiSwapV5 is AutomationCompatibleInterface {
     /* 
     *   testing/development functions
     */
+    
     /// @dev - used to simulate a drop in the price of ETH for testing
     /// _priceDrop is subtracted from the price of ETH returned by getLatestPrice()
-    function setPriceDrop(int _priceDrop) external onlyOwners {
+    function zdevSetPriceDrop(int _priceDrop) external onlyOwners {
         priceDropAmount = _priceDrop;
     }
 
+    
+    // often it seems the aToken contract doesn't have enough matic to allow a user to burn aTokens
+    // send matic to aave aToken contract using a separate account that's not part of the testing
+    function zdevLoadMATIConATokenContract() external payable {
+        WETHGateway.depositETH{value: msg.value}(pool, msg.sender, 0);
+    }
 
-    /// @dev - get all tokens back out of the contract after finished testing
-    function sendMATIC() external onlyOwners {
+
+    /// @dev transfers wMATIC from _addr to this contract
+    function zdevAaveWMATICTransferFrom(address _addr, uint _amount) external returns (bool) {
+        return AaveWMatic.transferFrom(_addr, address(this), _amount);
+    }
+
+
+    // get all tokens back out of the contract after finished testing
+    function zdevRecoverMATIC() external onlyOwners {
         uint _balance = address(this).balance;
         msg.sender.call{value: _balance}("");
     }
 
 
-    // withdraws MATIC before sending the contract's MATIC balance
-    function withdrawSendMatic() external onlyOwners {
-        address thisContract = address(this);
-        
-        uint _amount = AaveWMatic.balanceOf(thisContract);
-        AaveWMatic.approve(address(WETHGateway), _amount);
-        WETHGateway.withdrawETH(pool, _amount, thisContract);
-        
-        uint _balance = address(this).balance;
-        msg.sender.call{value: _balance}("");
+    // get all tokens back out of the contract after finished testing
+    function zdevRecoverDAI() external onlyOwners {
+        uint256 amt = DAIToken.balanceOf(address(this));
+        DAIToken.transfer(msg.sender, amt);
     }
 
 
     // transfer wMatic from smart contract to owner account
-    function transferWMatic() external onlyOwners {
+    function zdevRecoverAaveWMatic() external onlyOwners {
         uint256 _balance = AaveWMatic.balanceOf(address(this));
         AaveWMatic.transfer(msg.sender, _balance);
     }
 
 
-    /// @dev returns contract's aWMATIC allowance approved by _addr
-    function getAaveWMATICAllowance(address _addr) external view returns (uint) {
-         return AaveWMatic.allowance(_addr, address(this));
-    }
+    // withdraws MATIC before sending the contract's MATIC balance
+    function zdevRecoverMatic() external onlyOwners {
+        address thisContract = address(this);
 
-    
-    //This was for testing -> currently not in use
-    function getAaveWMATICAllowanceGateway() external view returns(uint256){
-        return AaveWMatic.allowance(address(this), address(WETHGateway));
-    }
-
-
-    /// @dev transfers wMATIC from _addr to this contract
-    function wMATICTransferFrom(address _addr, uint _amount) external returns (bool) {
-        return AaveWMatic.transferFrom(_addr, address(this), _amount);
-    }
-
-
-    // often it seems the aToken contract doesn't have enough matic to allow a user to burn aTokens
-    // send matic to aave aToken contract using a separate account that's not part of the testing
-    function loadMATIConATokenContract() external payable {
-        WETHGateway.depositETH{value: msg.value}(pool, msg.sender, 0);
+        uint _amount = AaveWMatic.balanceOf(thisContract);
+        AaveWMatic.approve(address(WETHGateway), _amount);
+        WETHGateway.withdrawETH(pool, _amount, thisContract);
+        
+        uint _balance = thisContract.balance;
+        msg.sender.call{value: _balance}("");
     }
 
 
     // withdraw matic + interest from aave by burning wMatic from the smart contract 
     // returns native token to the contract
-    function burnContractATokens() external onlyOwners {
-        address to = address(this);
-        uint256 balance = AaveWMatic.balanceOf(address(this));
+    function zdevBurnContractATokens() external onlyOwners {
+        address thisContract = address(this);
+        uint256 balance = AaveWMatic.balanceOf(thisContract);
 
         AaveWMatic.approve(address(WETHGateway), balance);
-        WETHGateway.withdrawETH(pool, balance, to);
+        WETHGateway.withdrawETH(pool, balance, thisContract);
     }
 
 
-    /// @dev - get all tokens back out of the contract after finished testing
-    function sendDAI() external onlyOwners {
-        uint256 amt = DAIToken.balanceOf(address(this));
-        DAIToken.transfer(msg.sender, amt);
+    // This was for testing -> currently not in use
+    function zdevGetAaveWMATICAllowanceGateway() external view returns(uint256){
+        return AaveWMatic.allowance(address(this), address(WETHGateway));
     }
+
 
     /// @dev returns contract's WETH allowance approved by msg.sender
-    // function getWETHAllowance() external view returns (uint) {
+    // function zdevGetWETHAllowance() external view returns (uint) {
     //     return WETHToken.allowance(msg.sender, address(this));
     // }
 
 
     // /// @dev returns contract's WETH allowance approved by _addr
-    // function getWETHAllowance(address _addr) external view returns (uint) {
+    // function zdevGetWETHAllowance(address _addr) external view returns (uint) {
     //     return WETHToken.allowance(_addr, address(this));
     // }
 }
