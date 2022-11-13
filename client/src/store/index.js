@@ -1,5 +1,6 @@
 import {createSlice, configureStore} from "@reduxjs/toolkit";
 import { getDefaultMiddleware } from '@reduxjs/toolkit';
+import graphSlice from "./graph";
 
 const initialState = {
     isConnected: false,
@@ -35,7 +36,7 @@ const authSlice = createSlice({
 })
 
 const store = configureStore({
-    reducer: {auth: authSlice.reducer},
+    reducer: {auth: authSlice.reducer, graph: graphSlice.reducer},
     middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: false,

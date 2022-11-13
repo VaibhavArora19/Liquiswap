@@ -5,7 +5,7 @@ import Form from "./Form";
 
 const Withdraw = () => {
   return (
-    <div>
+    <div className= {classes.withdrawSection}>
       <div className={`grid grid-cols-2 ${classes.withdraw}`}>
         <Graph />
         <Form />

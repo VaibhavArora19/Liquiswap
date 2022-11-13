@@ -7,18 +7,11 @@ import classes from "./Graph.module.css";
 
 const Graph = () => {
   const price = useSelector((state) => state.auth.latestPrice);
-  let priceHistory = null;
+  const priceHistory = useSelector((state) => state.graph.priceData);
+
 
   useEffect(() => {
-    (async function () {
-      const data = await fetch("https://liqui.onrender.com/api/pricehistory");
-      const response = await data.json();
-      const history = [...response.data.history];
-
-      priceHistory = history.map((singleHistory) => {
-        return singleHistory.price;
-      });
-    })();
+   
 
     setTimeout(() => {
       const ctx = document.getElementById("myChart").getContext("2d");

@@ -29,7 +29,7 @@ const Alert = (props) => {
                 </h1>
                 <p>&nbsp; {props.receiver}</p>
             </div>
-            <h3>Amount: {props.amount} MATIC</h3>
+            <h3>Amount: {props.amount} {props.tokenName}</h3>
         </div>
     </div>
   );
