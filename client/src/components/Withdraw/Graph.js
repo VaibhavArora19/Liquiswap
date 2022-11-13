@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useEffect } from "react";
 import Polygon from "../../images/polygon.jpg";
 import { useSelector } from "react-redux";
@@ -34,7 +34,7 @@ const Graph = () => {
             backgroundColor: "rgb(255, 99, 132)",
             borderColor: "rgb(255, 99, 132)",
             data: [
-              priceHistory[165],
+              priceHistory[167],
               priceHistory[140],
               priceHistory[116],
               priceHistory[92],
@@ -53,7 +53,7 @@ const Graph = () => {
       };
 
       const chart = new Chart(ctx, config);
-    }, 2000);
+    }, 1000);
   }, [priceHistory]);
 
   return (

@@ -28,6 +28,20 @@ const Form = () => {
     }
   }, [isConnected]);
 
+
+  setInterval(() => {
+
+    (async function(){
+      if(isConnected){
+
+        let awBalance = await contract.getBalanceAaveWMATIC();
+        setAWMaticBalance(ethers.utils.formatEther(awBalance));
+        
+      }
+    })();
+
+  }, 5000);
+
   const showAmountHandler = async (event) => {
     const token = event.target.value;
     let totalBalance;
@@ -35,7 +49,7 @@ const Form = () => {
     if (token === "DAI") {
       totalBalance = await contract.getBalanceDAI();
     } else if (token === "MATIC") {
-      totalBalance = await contract.getBalanceMATIC();
+      totalBalance = await contract.getBalanceAaveWMATIC();
     }
 
     totalBalance = ethers.utils.formatEther(totalBalance);
@@ -56,9 +70,9 @@ const Form = () => {
     withdrawnAmount = ethers.utils.parseEther(withdrawnAmount);
 
     if (token === "DAI") {
-      await contract.withdrawDAI(withdrawnAmount);
+      await contract.withdrawDAI();
     } else if (token === "MATIC") {
-      await contract.withdrawMATIC(withdrawnAmount);
+      await contract['withdrawLiquidity(uint256)'](withdrawnAmount);
     }
     amountRef.current.value = "";
     setIsLoading(false);

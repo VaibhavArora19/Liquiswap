@@ -3,6 +3,8 @@ import Button from "../UI/Button";
 import form from "../../images/form.svg";
 import discount from "../../images/discount.svg";
 import { useNavigate } from "react-router-dom";
+import Footer from "../Footer/Footer";
+import React from "react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -12,6 +14,7 @@ const LandingPage = () => {
   };
 
   return (
+    <React.Fragment>
     <div className= {`grid grid-cols-2 ${classes.landingPage}`}>
       <div className={classes.description}>
         <h2>
@@ -35,6 +38,8 @@ const LandingPage = () => {
             <img src = {discount} className = {classes.discount} alt = "discount" />
         </div>
     </div>
+    <Footer margin = "3%"/>
+    </React.Fragment>
   );
 };
 

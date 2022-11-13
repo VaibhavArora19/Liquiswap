@@ -1,6 +1,4 @@
-import LandingPage from "./components/LandingPage/LandingPage";
 import Navbar from "./components/Navbar/Navbar";
-import Footer from "./components/Footer/Footer";
 import Paths from "./Routes/Paths";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -29,7 +27,6 @@ function App() {
     <div>
     <Navbar />
     <Paths />
-    <Footer />
     </div>
   );
 }

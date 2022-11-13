@@ -1,26 +1,43 @@
 import classes from "./Invest.module.css";
 import Bitcoin from "../../images/bitcoin.svg";
-import { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import ReactTooltip from "react-tooltip";
 import { useSelector } from "react-redux";
 import { ethers} from "ethers";
 import Alert from "../UI/Alert";
 import { contractAddress } from "../constants";
+import Footer from "../Footer/Footer";
 
 
 const Invest = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const contract = useSelector((state) => state.auth.contract);
+  const isConnected = useSelector((state) => state.auth.isConnected);
   const ethPrice = useSelector((state) => state.auth.latestPrice);
   const aWMaticContract = useSelector((state) => state.auth.erc20Contract);
   const valueRef = useRef();
   const liquidationValueRef = useRef();
 
 
+  useEffect(() => {
+    
+    if(isConnected){
+
+      (async function(){
+        const checkApproved = await contract['isApproved()']();
+        
+        setIsApproved(checkApproved);
+        // console.log('check Approved is ', checkApproved)
+        
+      })();
+      
+    }
+  }, [isConnected]);
+
   const getApproval = async () => {
 
-      if(isApproved) return;
+      if(isApproved || !isConnected) return;
 
       const ethDeposit = ethers.utils.parseEther("1000000");
       const approved = await aWMaticContract.approve(contractAddress, ethDeposit);
@@ -41,7 +58,7 @@ const Invest = () => {
     let liquidationPrice = ethers.utils.parseEther(liquidationValueRef.current.value);
 
     
-    const depositMATIC = await contract["depositMATIC(int256)"](liquidationPrice, {value: ethValue});
+    const depositMATIC = await contract["supplyLiquidity(int256)"](liquidationPrice, {value: ethValue});
     await depositMATIC.wait();
 
     valueRef.current.value = '';
@@ -50,6 +67,7 @@ const Invest = () => {
   };
 
   return (
+    <React.Fragment>
     <div className={`grid grid-cols-2 ${classes.invest}`}>
       <div>
         <img src={Bitcoin} alt="growth" />
@@ -83,7 +101,7 @@ const Invest = () => {
           />
           <div onClick = {getApproval} className = {classes.info}>
             <div data-for = "information" data-tip = "You need to approve Liquiswap in order to swap your aWMatic into Matic and then swap it into DAI whenever threshold price will reach.">
-              <Alert classes = "alert-info" message = {isApproved ? "Approved" :"Allow Liquiswap to use aWMatic"}/>
+              <Alert classes = "alert-info" message = {!isConnected ? "Loading" : isApproved ? "Approved" :"Allow Liquiswap to use aWMatic"}/>
             </div>
           </div>
           <button
@@ -100,6 +118,8 @@ const Invest = () => {
       </div>
       <ReactTooltip id="information" place="top" effect="solid" />
     </div>
+    <Footer margin = "10%"/>
+    </React.Fragment>
   );
 };
 

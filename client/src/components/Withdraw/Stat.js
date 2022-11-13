@@ -15,10 +15,10 @@ const Stat = () => {
       (async function(){
         
         if(isConnected){
-          let blnc = await contract.getBalanceMATIC();
+          // let blnc = await contract.getBalanceMATIC();
           let wBalance = await contract.getContractBalanceMATIC();
           let dBalance = await contract.getBalanceDAI();
-          setBalance(ethers.utils.formatEther(blnc));
+          // setBalance(ethers.utils.formatEther(blnc));
           setWethBalance(ethers.utils.formatEther(wBalance));
           setDaiBalance(ethers.utils.formatEther(dBalance));
         }
