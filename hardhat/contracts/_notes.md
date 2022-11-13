@@ -8,3 +8,10 @@ deposits held under contract's address
 
 v5 supplyLiquidity onBehalfOf msg.sender and using approve/transfer to liquidate
 0x4C1b7A295641bc3C596b0f139b3AAB2b03Bd14bC
+
+
+v5 
+added isApproved function 
+logic allows allowance less than balance for partial liquidations
+refactoring
+0x5b24D1805b6F7436f427336cB41a2803DdD29dcc
