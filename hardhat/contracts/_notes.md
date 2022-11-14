@@ -1,3 +1,56 @@
+v6 changes
+deploy address 0x8daa939F23D76BAb8991Cbc9cF7a00Ef4Fa6c26b
+
+changed event 
+
+	Deposit
+	
+	event Deposit(address indexed user, string token, uint amount, uint balance);     // can make multiple deposits or have existing balance
+	
+added event
+	
+	EarnedNFT
+		event EarnedNFT(address indexed user, uint numNFTs);
+	
+	
+	Donation
+		event Donation(address indexed charity, uint amount);
+
+
+
+added functions
+
+	get msg.sender's principal
+		getPrincipal() external view returns (int)
+	
+	set msg.sender's principal
+		setPrincipal(uint _principal) external     
+	
+		there's edge cases and for this, and testing as yield calculated by balance - principal, or could use zdevLoadMATIConATokenContract() as the user to bump up there balance so calculation produces a yeild
+	
+	get msg.sender's total num NFTs earned
+		getNumNFTs() external view returns (uint)
+
+	send donation to charity
+		sendDonation(address _charity, uint _amount)
+	
+
+
+note: function to add more liquidity with non liquiswap user account in case hit problem with withdrawing
+	zdevLoadMATIConATokenContract() external payable
+	
+	and automation testing - simulate a price drop
+	zdevSetPriceDrop(int _priceDrop)
+
+
+
+
+
+
+------------------------------------
+
+
+
 LiquiSwap test version : depositWETH not overloaded
 0x71f6e68382425a42BA88c0a1e579B05c56797767
 
