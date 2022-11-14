@@ -1,5 +1,6 @@
 .invest {
     margin-bottom: 3%;
+    margin-top: 7%;
 }
 
 .highlight {
@@ -10,9 +11,8 @@
 
 .investForm {
     display: inline-block;
-    margin-top: 2%;
-    margin-left: 15%;
-    width: 70%;
+    margin: 2% auto;
+    width: 65%;
     background-color: rgb(14, 17, 26);
     border-radius: 20px;
 }
@@ -21,12 +21,13 @@
     margin-top: 3%;
     font-size: 1.8rem;
     font-weight: 700;
-    margin-left: 6%;
+    /* margin-left: 6%; */
+    text-align: center;
 }
 
 .investForm form {
     margin-top: 3%;
-    margin-left: 13%;
+    margin-left: 12%;
 }
 
 .investForm span {
@@ -73,4 +74,22 @@
     cursor: pointer;
     margin-top: 20px;
     width: 325px;
+}
+
+@media (min-width: 1400px) {
+    .investForm form{
+        margin-left: 18%;
+    }
+}
+
+
+@media (max-width:750px) {
+    .invest img{
+        width: 450px;
+        margin: 5% auto;
+    }
+
+    .investForm{
+        margin-top: 12%;
+    }
 }

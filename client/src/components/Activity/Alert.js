@@ -17,7 +17,7 @@ const Alert = (props) => {
         <div>
           <div className= {classes.imageData}>
             <img src={Polygon} />
-            <h3>MATIC</h3>
+            <h3>{props.tokenName}</h3>
           </div>
           <i class="fa-regular fa-arrow-right-long fa-2x"></i>
         </div>

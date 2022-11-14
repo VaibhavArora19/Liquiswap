@@ -34,7 +34,7 @@ const Graph = () => {
             backgroundColor: "rgb(255, 99, 132)",
             borderColor: "rgb(255, 99, 132)",
             data: [
-              priceHistory[167],
+              priceHistory[165],
               priceHistory[140],
               priceHistory[116],
               priceHistory[92],

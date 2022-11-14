@@ -9,7 +9,8 @@ const initialState = {
     signer: null,
     contract: null,
     latestPrice: 0,
-    erc20Contract: null
+    erc20Contract: null,
+    cidList: null
 }
 
 const authSlice = createSlice({
@@ -30,6 +31,9 @@ const authSlice = createSlice({
         },
         createErc20(state, data){
             state.erc20Contract = data.payload;
+        },
+        cidList(state, data){
+            state.cidList = data.payload;
         }
     },
 

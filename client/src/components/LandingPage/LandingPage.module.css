@@ -30,7 +30,7 @@
 }
 
 .landingPage {
-    margin-top: 0;
+    margin-top: 7%;
 }
 
 .images {
@@ -44,4 +44,11 @@
     position: relative;
     bottom: 32%;
     right: 8%;
+}
+
+@media (max-width:765px){
+    .images{
+        margin-top: 13%;
+        margin-left: 20%;
+    }
 }

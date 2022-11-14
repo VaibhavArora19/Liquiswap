@@ -1,14 +1,23 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Alert from "./Alert";
 import { contractAddress } from "../constants";
 import { useSelector } from "react-redux";
 
 const Activity = () => {
+    const [ipfsData, setIpfsData] = useState(null);
     const accountAddress = useSelector((state) => state.auth.accountAddress);
+    const cidArray = useSelector((state) => state.auth.cidList);
+    const isConnected = useSelector((state) => state.auth.isConnected);
+
+    // let ipfsObjects = [];
+
+    
     return (
         <React.Fragment>
-            <Alert sender = {accountAddress} receiver = {contractAddress} time = {"Teusday 11:03 AM"} amount = {0.00001} tokenName = {"MATIC"}/>
-           
+        {cidArray && cidArray.map((obj) => {
+            return <Alert id = {obj.address} sender = {obj.address} receiver = {obj.contractAddress} time = {obj.time} amount = {obj.value} tokenName = {obj.token}/>     
+        })
+        }
         </React.Fragment>
     )
 };

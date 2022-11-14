@@ -1,29 +1,35 @@
-const {ethers} = require("ethers");
+// const {ethers} = require("ethers");
 
-const ABI = [
-    "function approve(address spender, uint256 amount) external returns (bool)"
-];
-const contractAddress = "CONTRACT_ADDRESS";
+// const ABI = [
+//     "function approve(address spender, uint256 amount) external returns (bool)"
+// ];
+// const contractAddress = "CONTRACT_ADDRESS";
 
-const main = async () => {
+// const main = async () => {
 
-    const privateKey = "PRIVATE_KEY" //your private key
+//     const privateKey = "PRIVATE_KEY" //your private key
     
-    const provider = new ethers.providers.JsonRpcProvider("ALCHEMY MUMBAI KEY"); //get your key on alchemy
+//     const provider = new ethers.providers.JsonRpcProvider("ALCHEMY MUMBAI KEY"); //get your key on alchemy
     
-    const wallet = new ethers.Wallet(privateKey, provider)
+//     const wallet = new ethers.Wallet(privateKey, provider)
 
-    const contract = new ethers.Contract(contractAddress, ABI, provider);
+//     const contract = new ethers.Contract(contractAddress, ABI, provider);
 
-    const contractWithWallet = contract.connect(wallet);
+//     const contractWithWallet = contract.connect(wallet);
 
-    //enter address and amount here
-    const tx = await contractWithWallet.approve("SPENDER_ADDRESS(OUR CONTRACT ADDRESS IG, AMOUNT_TO_APPROVE)");
+//     //enter address and amount here
+//     const tx = await contractWithWallet.approve("SPENDER_ADDRESS(OUR CONTRACT ADDRESS IG, AMOUNT_TO_APPROVE)");
 
-    await tx.wait();
+//     await tx.wait();
 
-    console.log(tx);
-};
+//     console.log(tx);
+// };
 
 
-main().then().catch(e => console.log(e));
+// main().then().catch(e => console.log(e));
+
+const date = new Date();
+
+const currentDate = date.getDay() + '-' + date.getMonth() + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+
+console.log(currentDate)

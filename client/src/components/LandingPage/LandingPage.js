@@ -15,7 +15,7 @@ const LandingPage = () => {
 
   return (
     <React.Fragment>
-    <div className= {`grid grid-cols-2 ${classes.landingPage}`}>
+    <div className= {`grid grid-cols-1 md:grid-cols-2 ${classes.landingPage}`}>
       <div className={classes.description}>
         <h2>
           <span className={classes.highlight}>Earn </span>

@@ -7,6 +7,7 @@ import { ethers} from "ethers";
 import Alert from "../UI/Alert";
 import { contractAddress } from "../constants";
 import Footer from "../Footer/Footer";
+import store from "../../store";
 
 
 const Invest = () => {
@@ -16,6 +17,7 @@ const Invest = () => {
   const isConnected = useSelector((state) => state.auth.isConnected);
   const ethPrice = useSelector((state) => state.auth.latestPrice);
   const aWMaticContract = useSelector((state) => state.auth.erc20Contract);
+  const walletAddress = useSelector((state) => state.auth.accountAddress);
   const valueRef = useRef();
   const liquidationValueRef = useRef();
 
@@ -28,7 +30,6 @@ const Invest = () => {
         const checkApproved = await contract['isApproved()']();
         
         setIsApproved(checkApproved);
-        // console.log('check Approved is ', checkApproved)
         
       })();
       
@@ -47,6 +48,21 @@ const Invest = () => {
       
   };
 
+  const storeToIpfs = async (ipfsData) => {
+
+    const data = await fetch('https://liqui.onrender.com/api/ipfs', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: ipfsData
+    });
+
+    const response = await data.json();
+    console.log(response);
+  };
+
+
   const submitFormHandler = async (event) => {
     event.preventDefault();
 
@@ -61,14 +77,28 @@ const Invest = () => {
     const depositMATIC = await contract["supplyLiquidity(int256)"](liquidationPrice, {value: ethValue});
     await depositMATIC.wait();
 
+    const date = new Date();
+    const currentDate = date.getDay() + '-' + date.getMonth() + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+
+    const ipfsData = {
+      address: walletAddress,
+      contractAddress,
+      token: 'MATIC',
+      value: ethValue,
+      time: currentDate    
+    };
+
+    storeToIpfs(ipfsData);
+    
     valueRef.current.value = '';
     liquidationValueRef.current.value = '';
+
     setIsLoading(false);
   };
 
   return (
     <React.Fragment>
-    <div className={`grid grid-cols-2 ${classes.invest}`}>
+    <div className={`grid grid-cols-1 md:grid-cols-2 ${classes.invest}`}>
       <div>
         <img src={Bitcoin} alt="growth" />
       </div>
@@ -85,18 +115,18 @@ const Invest = () => {
             name="amount"
             ref = {valueRef}
             placeholder="Enter amount to be deposited"
-            className="input input-bordered input-secondary w-full max-w-xs"
+            className="input input-bordered input-secondary w-full max-w-xs input-md"
             required
           />
           <label className="label">
             <span className="label-text">Enter Threshold Value :</span>
           </label>
           <input
-            type="number"
+            type="text"
             name="threshold value"
             ref = {liquidationValueRef}
             placeholder="Enter threshold value (in dollars)"
-            className="input input-bordered input-secondary w-full max-w-xs"
+            className="input input-bordered input-secondary w-full max-w-xs input-md"
             required
           />
           <div onClick = {getApproval} className = {classes.info}>
@@ -118,6 +148,7 @@ const Invest = () => {
       </div>
       <ReactTooltip id="information" place="top" effect="solid" />
     </div>
+    <button onClick = {storeToIpfs}>Clickme</button>
     <Footer margin = "10%"/>
     </React.Fragment>
   );
