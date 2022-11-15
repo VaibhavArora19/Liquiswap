@@ -1,22 +1,53 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Alert from "./Alert";
-import { contractAddress } from "../constants";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { authActions } from "../../store";
 
 const Activity = () => {
-    const [ipfsData, setIpfsData] = useState(null);
-    const accountAddress = useSelector((state) => state.auth.accountAddress);
+    const dispatch = useDispatch();
     const cidArray = useSelector((state) => state.auth.cidList);
     const isConnected = useSelector((state) => state.auth.isConnected);
+    const walletAddress = useSelector((state) => state.auth.accountAddress);
+    
+    useEffect(() => {
+        if(isConnected){
+            (async function (){
+              const data = await fetch('https://liqui.onrender.com/api/getdata', {
+                method: 'POST',
+                headers:{
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  address: walletAddress
+                })
+              });
+              const cidArray = await data.json();
+              dispatch(authActions.cidList(cidArray))
+            })();
+          }
+    }, [isConnected]);
 
-    // let ipfsObjects = [];
+    const emptyHeading = {
+        fontSize: "2rem",
+        textAlign: "center",
+        fontWeight: "600"
+    }
+
+    const emptyMessage = {
+        fontSize: "1.4rem",
+        textAlign: "center",
+        marginTop: "2%"
+    }
 
     
     return (
         <React.Fragment>
-        {cidArray && cidArray.map((obj) => {
-            return <Alert id = {obj.address} sender = {obj.address} receiver = {obj.contractAddress} time = {obj.time} amount = {obj.value} tokenName = {obj.token}/>     
-        })
+        {( cidArray && cidArray.length !== 0) ? cidArray.map((obj) => {
+            return <Alert id = {obj._id} sender = {obj.sender} receiver = {obj.receiver} time = {obj.time} amount = {obj.amount} tokenName = {obj.token} method = {obj.method}/>     
+        }) : <div style = {{margin: "10% auto"}}>
+        <h1 style = {emptyHeading}>Nothing to see here</h1>
+        <h3 style={emptyMessage}>You have not made any transactions recently</h3>
+        </div>
         }
         </React.Fragment>
     )

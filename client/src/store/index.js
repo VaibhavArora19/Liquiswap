@@ -10,7 +10,7 @@ const initialState = {
     contract: null,
     latestPrice: 0,
     erc20Contract: null,
-    cidList: null
+    cidList: null,
 }
 
 const authSlice = createSlice({
@@ -34,7 +34,7 @@ const authSlice = createSlice({
         },
         cidList(state, data){
             state.cidList = data.payload;
-        }
+        },
     },
 
 })

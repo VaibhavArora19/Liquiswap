@@ -5,6 +5,9 @@ import discount from "../../images/discount.svg";
 import { useNavigate } from "react-router-dom";
 import Footer from "../Footer/Footer";
 import React from "react";
+import Chainlink from "../../images/chainlink.png";
+import Filecoin from "../../images/filecoin.png";
+import Uniswap from "../../images/uniswap.webp";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -38,6 +41,13 @@ const LandingPage = () => {
             <img src = {discount} className = {classes.discount} alt = "discount" />
         </div>
     </div>
+    <div className= {classes.about}>
+      <img src = {Filecoin} className = {classes.filecoin}/>
+      <img src = {Chainlink} className = {classes.chainlink}/>
+      <h1>Highly <span className={classes.highlight}>Reliable </span> Infrastructure</h1>
+      <h4>Liquiswap is an automated web3 DeFi app allowing you to deposit money and earn yield on it without ever caring about the next market crash, it is built using highly trusted and reliable web3 technolgies including Chainlink, Filecoin, Aave and Uniswap. So your money will always stay in safe hands</h4>
+      <img src = {Uniswap} className = {classes.uniswap}/>
+      </div>
     <Footer margin = "3%"/>
     </React.Fragment>
   );
