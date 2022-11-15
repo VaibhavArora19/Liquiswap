@@ -7,7 +7,6 @@ import { ethers} from "ethers";
 import Alert from "../UI/Alert";
 import { contractAddress } from "../constants";
 import Footer from "../Footer/Footer";
-import store from "../../store";
 
 
 const Invest = () => {
@@ -55,7 +54,7 @@ const Invest = () => {
       headers: {
         "Content-Type": "application/json"
       },
-      body: ipfsData
+      body: JSON.stringify(ipfsData)
     });
 
     const response = await data.json();
@@ -81,11 +80,14 @@ const Invest = () => {
     const currentDate = date.getDay() + '-' + date.getMonth() + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
 
     const ipfsData = {
+      _id: Math.random() * 10000,
       address: walletAddress,
-      contractAddress,
+      sender: walletAddress,
+      receiver: contractAddress,
       token: 'MATIC',
-      value: ethValue,
-      time: currentDate    
+      amount: valueRef.current.value,
+      time: currentDate,
+      method: "Deposit"  
     };
 
     storeToIpfs(ipfsData);
@@ -148,7 +150,6 @@ const Invest = () => {
       </div>
       <ReactTooltip id="information" place="top" effect="solid" />
     </div>
-    <button onClick = {storeToIpfs}>Clickme</button>
     <Footer margin = "10%"/>
     </React.Fragment>
   );

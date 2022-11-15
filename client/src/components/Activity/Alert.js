@@ -1,7 +1,18 @@
-import Polygon from "../../images/polygon.jpg";
+import MATIC from "../../images/polygon.jpg";
+import aWMATIC from "../../images/wMatic.png";
+import DAI from "../../images/DAI.png";
 import classes from "./Alert.module.css";
 
 const Alert = (props) => {
+  let img;
+
+  if(props.tokenName === "MATIC"){
+    img = MATIC;
+  }else if(props.tokenName === "aWMATIC"){
+    img = aWMATIC;
+  }else if(props.tokenName === "DAI"){
+    img = DAI;
+  }
   return (
     <div className={`grid grid-cols-3 ${classes.alert}`}>
       <div className= {classes.fromClass}>
@@ -16,7 +27,7 @@ const Alert = (props) => {
       <div>
         <div>
           <div className= {classes.imageData}>
-            <img src={Polygon} />
+            <img src={img} />
             <h3>{props.tokenName}</h3>
           </div>
           <i class="fa-regular fa-arrow-right-long fa-2x"></i>
@@ -29,7 +40,7 @@ const Alert = (props) => {
                 </h1>
                 <p>&nbsp; {props.receiver}</p>
             </div>
-            <h3>Amount: {props.amount} {props.tokenName}</h3>
+            <h3>Amount: {props.amount.toString()} {props.tokenName} {`(${props.method})`}</h3>
         </div>
     </div>
   );

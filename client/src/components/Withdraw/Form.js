@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import classes from "./Form.module.css";
 import { useSelector } from "react-redux";
 import { ethers } from "ethers";
-import { ERC20ABI, ERC20ContractAddress } from "../constants";
+import { ERC20ABI, ERC20ContractAddress, contractAddress } from "../constants";
 
 const Form = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +57,20 @@ const Form = () => {
     setToken(token);
   };
 
+  const storeToIpfs = async (ipfsData) => {
+    const data = await fetch('https://liqui.onrender.com/api/ipfs', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(ipfsData)
+    });
+
+    const response = await data.json();
+    console.log(response);
+  };
+
+
   const submitFormHandler = async (event) => {
     event.preventDefault();
 
@@ -69,10 +83,44 @@ const Form = () => {
     let withdrawnAmount = amountRef.current.value;
     withdrawnAmount = ethers.utils.parseEther(withdrawnAmount);
 
+    const date = new Date();
+    const currentDate = date.getDay() + '-' + date.getMonth() + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+    
     if (token === "DAI") {
-      await contract.withdrawDAI();
+      const tx = await contract.withdrawDAI();
+      await tx.wait();
+
+      const ipfsData = {
+        _id: Math.random() * 10000,
+        address: accountAddress,
+        sender: contractAddress,
+        receiver: accountAddress,
+        token: 'DAI',
+        amount: amountRef.current.value,
+        time: currentDate,
+        method: "Withdraw" 
+      };
+
+      storeToIpfs(ipfsData);
+
     } else if (token === "MATIC") {
-      await contract['withdrawLiquidity(uint256)'](withdrawnAmount);
+
+      const tx = await contract['withdrawLiquidity(uint256)'](withdrawnAmount);
+      await tx.wait();
+
+      const ipfsData = {
+        _id: Math.random() * 10000,
+        address: accountAddress,
+        sender: contractAddress,
+        receiver: accountAddress,
+        token: 'aWMATIC',
+        amount: amountRef.current.value,
+        time: currentDate,
+        method: "Withdraw" 
+      };
+
+      storeToIpfs(ipfsData);
+
     }
     amountRef.current.value = "";
     setIsLoading(false);

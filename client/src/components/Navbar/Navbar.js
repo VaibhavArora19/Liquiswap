@@ -86,6 +86,9 @@ const Navbar = () => {
           <NavLink to = "/activity" style = {({isActive}) => isActive ? activeStyle : undefined}>
             <h3>Activity</h3>
           </NavLink>
+          <NavLink to = "/nft" style = {({isActive}) => isActive ? activeStyle : undefined}>
+          <h3>NFTs</h3>
+          </NavLink>
         </div>
         <div className = {classes.btn}>
           <Button classes = "btn-secondary btn-active" label = {isConnected ? `${accountAddress.substr(0, 5)}...${accountAddress.substr(37,42)}` :"Connect Wallet"} onClick = {connectWalletHandler}/>

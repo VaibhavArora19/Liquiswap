@@ -46,6 +46,55 @@
     right: 8%;
 }
 
+.about {
+    margin-bottom: 7%; 
+}
+
+.about h1{
+    /* width: 90%; */
+    text-align: center;
+    font-size: 3.4rem;
+    font-weight: 700;
+    line-height: 1; 
+}
+
+.about h4{
+    margin: 4% auto;
+    font-size: 1.15rem;
+    width: 60%;
+    text-align: center;
+}
+.filecoin{
+    width: 150px;
+    position: relative;
+    /* transform: rotate(15deg); */
+    display: inline-block;
+    left: 4%;
+    top:100px;
+    z-index: 10;
+}
+
+.chainlink {
+    z-index: 10;
+    width: 150px;
+    top:10px;
+    display: inline-block;
+    position: relative;
+    transform: rotate(-45deg);
+    left: 72%;
+}
+
+.uniswap{
+    z-index: 10;
+    width: 150px;
+    /* top:10px; */
+    bottom: 10px;
+    display: inline-block;
+    position: relative;
+    transform: rotate(-15deg);
+    left: 45%;
+}
+
 @media (max-width:765px){
     .images{
         margin-top: 13%;
