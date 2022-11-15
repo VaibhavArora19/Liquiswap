@@ -1,3 +1,39 @@
+v6.1 changes
+
+deployed to 0x64D1eE237c1633044b812F0a618a9171D7d2A803
+
+changed liquidation events from 1 total to 1 per liquidated user
+added and changed withdrawal events
+added withdrawDAI overload with amount param
+added NFT awarded counter
+added wasLiquidated bool
+
+liquidation event flag in user struct
+	wasLiquidated() public view returns (bool)
+	set when user liquidated
+	unset when user supplies more liquidity or withdraws all DAI
+
+count of NFTs awarded
+	user awarded an NFT (count incremented) when a withdrawl results in a donation
+	function getNumNFTs() external view returns (uint)
+
+
+withdrawDAI overloaded
+	withdrawDAI(uint _amount) public
+	withdrawDAI() external
+
+
+changed event
+    event Withdrawal(address indexed user, string token, uint amount, uint donation);
+
+
+added event
+	event WithdrawalDAI(address indexed user, string token, uint amount);
+
+
+
+
+
 v6 changes
 deploy address 0x8daa939F23D76BAb8991Cbc9cF7a00Ef4Fa6c26b
 

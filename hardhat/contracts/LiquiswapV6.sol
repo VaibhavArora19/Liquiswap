@@ -1,6 +1,6 @@
-// v6 add split yield with ngo/charity on when widrawing liquidity
+// v6 add split yield with ngo/charity on when widrawing liquidity, count NFTs awarded for donations
 // v5 change aaave deposits to user's address vs this contract's address
-// this way we don't need to track the user's deposits and interest, but have to withdraw individual deposit amounts
+//  this way we don't need to track the user's deposits and interest, but will have to withdraw individual deposits
 // v4 add aave supply liquidity 
 // v3 version with MATIC
 // dropped the WETH version to implement Aave staking which meant we had to switch to depositing MATIC
@@ -72,8 +72,9 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     event UserAdded(address indexed user);
     event UserDeleted(address indexed user);
     event Deposit(address indexed user, string token, uint amount, uint balance);
-    event Withdrawal(address indexed user, string token, uint amount, uint yield);
-    event Liquidation(int indexed price, uint targetAmount, uint actualAmount);
+    event Withdrawal(address indexed user, string token, uint amount, uint donation);
+    event WithdrawalDAI(address indexed user, string token, uint amount);
+    event Liquidation(address indexed user, int indexed price, uint amountMATIC, uint amountDAI);
     event EarnedNFT(address indexed user, uint numNFTs);
     event Donation(address indexed charity, uint amount);
 
@@ -84,8 +85,9 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     // uniswap
     address constant routerAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     ISwapRouter internal immutable swapRouter = ISwapRouter(routerAddress);
+    uint24 constant poolFee = 3000;  // pool fee set to 0.3%.
 
-    address WMATIC = 0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889; //Wrapped MATIC token contract
+    address WMATIC = 0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889; // Wrapped MATIC token contract
 
     address constant DAI = 0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F;
     IERC20 internal DAIToken = IERC20(DAI);
@@ -94,15 +96,26 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     // address _addressProvider = 0x5343b5bA672Ae99d627A1C87866b8E53F47Db2E6;    // ---> this isn't used anywhere
     address pool = 0x6C9fB0D5bD9429eb9Cd96B85B81d872281771E6B;
 
+    // wrapped native token - MATIC not ETH
     IWETHGateway immutable WETHGateway = IWETHGateway(0x2a58E9bbb5434FdA7FF78051a4B82cb0EF669C17);
-    IERC20 AaveWMatic = IERC20(0x89a6AE840b3F8f489418933A220315eeA36d11fF);  // WMATIC-AToken-Polygon  
+    
+    // Aave aToken contract - WMATIC-AToken-Polygon
+    IERC20 AaveWMatic = IERC20(0x89a6AE840b3F8f489418933A220315eeA36d11fF);    
 
-
-    // For this example, we will set the pool fee to 0.3%.
-    uint24 constant poolFee = 3000;
-
+    // contract owners
     mapping(address => bool) public owners;     // owner address => bool
     uint numOwners;
+
+
+    struct user {
+        uint usersIndexPosition;
+        uint principalMATIC;
+        int liquidationPrice;
+        uint liquidationSharesIn;
+        uint balanceDAI;
+        bool wasLiquidated;
+        uint numNFTs;
+    }
 
 
     /// @dev keeps track of users and their liquidation/stop prices
@@ -110,19 +123,10 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     address[] public usersIndex;
     mapping(address => user) public users;
 
-    struct user {
-        uint usersIndexPosition;
-        uint principalMATIC;
-        int liquidationPrice;
-        uint sharesOfLiquidation;
-        uint balanceDAI;
-        uint numNFTs;
-    }
-
 
 // for testing only
     int public priceDropAmount; // for testing can simulate a big drop in price
-// testing
+// /testing
 
     /// @dev add dummy first user so it's certain a userIndexPosition test returning 0 means user doesn't exist in mapping and corresponding array
     constructor () {
@@ -144,12 +148,14 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     }
 
 
+    /// @dev add contract owner/admin
     function addOwner(address _newOwner) public onlyOwners {
         owners[_newOwner] = true;
         ++numOwners;
     }
 
 
+    /// @dev remove contract owners/admin
     function delOwner(address _delOwner) external onlyOwners {
         require(numOwners > 1, "can't del last owner");
         require(owners[_delOwner], "not an owner");
@@ -157,9 +163,10 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
         --numOwners;
     }
 
-// ---> get latest price for MATIC/USD - this can be replaced by something else
+
     /**
-     * Returns the latest MATIC/USD price
+     * @dev uses Chainlink Price Feed
+     * returns the latest MATIC/USD price
      */
     function getLatestPrice() public view returns (int) {
         (
@@ -171,17 +178,14 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
         ) = priceFeed.latestRoundData();
         return price - priceDropAmount;  // priceTestingFactor aid for testing only
     }
-// <---
 
-// ---> added add / delete user functions
-    // @ todo: secure who can execute function
-    //  : public while testing
 
+    /// @dev onboard user 
     function addUser() public {
         require(users[msg.sender].usersIndexPosition == 0, "user already added");
 
         usersIndex.push(msg.sender);
-        users[msg.sender] = user({usersIndexPosition: usersIndex.length, principalMATIC: 0, liquidationPrice: -1, sharesOfLiquidation: 0, balanceDAI: 0, numNFTs: 0});
+        users[msg.sender] = user({usersIndexPosition: usersIndex.length, principalMATIC: 0, liquidationPrice: -1, liquidationSharesIn: 0, balanceDAI: 0, wasLiquidated: false, numNFTs: 0});
         emit UserAdded(msg.sender);
     }
 
@@ -211,13 +215,13 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     }
 
 
-    /// @dev returns a user's principal
+    /// @dev adjust a user's principal
     function setPrincipal(uint _principal) external {
         users[msg.sender].principalMATIC = _principal;
     }
 
 
-    //  delete a user's (msg.sender) account
+    ///  @dev offboard user
     function delUser() public {
         require(users[msg.sender].usersIndexPosition != 0, "not a user");
         require(users[msg.sender].balanceDAI == 0, "DAI balance > 0");
@@ -230,7 +234,7 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     }
 
 
-    /// @dev all native token sent is deposited to 
+    /// @dev msg.sender sends native token to Aave WMATIC contract. received Aave aTokens 
     function supplyLiquidity() public payable {
         if(users[msg.sender].usersIndexPosition == 0) addUser();
 
@@ -249,6 +253,7 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
         }
 
         emit Deposit(msg.sender, "MATIC", _actual, _balanceAfter);
+        if(wasLiquidated()) users[msg.sender].wasLiquidated = false; //reset
     }
 
 
@@ -258,15 +263,9 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     }
     
 
-    /// @dev balances before and after interacting with aToken contract as actual amounts often not what was expected
+    /// @dev check balances before and after interacting with aToken contract as actual amounts often not exactly as expected
     /// can fail if AaveWMATIC contract doesn't have enough MATIC to pay out. Can add more liquidity to try again
     /// don't test with a value of 1 wei, it fails when I higher amount might work. possibly due to +/- issue
-    function withdrawLiquidity() external {
-        uint _balance = AaveWMatic.balanceOf(msg.sender);
-        withdrawLiquidity(_balance);
-    }
-
-
     function withdrawLiquidity(uint _amount) public {
         require(_amount <= AaveWMatic.balanceOf(msg.sender), "amount > balance");  //new
         require(_amount <= AaveWMatic.allowance(msg.sender, address(this)), "amount > allowance"); //new
@@ -282,9 +281,9 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
         _verifiedAmount = getContractBalanceMATIC() - _contractBalanceBefore;
 
 
-        // if the withdrawn ammount is more than principal, assume is difference is yeild
-        // user gets half the yield back and earns an NFT and half is donated
-        // if the amount withdrawn is less than , no yield is calculated. system is simple, not perfect
+        // if the withdrawal ammount > principal, assume is difference is yeild
+        // user gets half the yield and earns an NFT, the other half is a donation
+        // if the withdrawal amount <= the principal, no yield is calculated. system is simple, not perfect
         uint _withdrawalAmount;
         uint _donation;
         
@@ -298,8 +297,6 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
             _withdrawalAmount = _verifiedAmount;
             users[msg.sender].principalMATIC -= _verifiedAmount;
         }
-        
-
 
         // send native tokens to user 
         (bool success, ) = msg.sender.call{value: _verifiedAmount}("");
@@ -309,57 +306,73 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     }
 
 
-    // transfer can be used after supplyLiquidityUser() and the user has approved this contract 
-    // transfer _amount aTokens from msg.sender to contract
+    function withdrawLiquidity() external {
+        uint _balance = AaveWMatic.balanceOf(msg.sender);
+        withdrawLiquidity(_balance);
+    }
+
+
+    /// @dev transfer _amount aTokens from msg.sender to contract
     function transferAaveWMATIC(uint _amount) private {
         AaveWMatic.transferFrom(msg.sender, address(this), _amount);
     }
 
     
-    // transfer msg.sender's balanceOf aTokens to contract
+    /// @dev transfer msg.sender's balanceOf aTokens to contract
     function transferAaveWMATIC() private {
         uint _balance = AaveWMatic.balanceOf(msg.sender);
         transferAaveWMATIC(_balance);
     }
 
 
-    // check if contract has an allowance for the user's aTokens
-    // the user can choose to have the contract only liquidate the approval amount of their balance
+    /// @dev user has approved the contract to spend at least some of thier AaveWMATIC tokens
+    /// the user can choose an approval ammount that liquidate all or only some of their balance
     function isApproved() external view returns (bool) {
         return isApproved(msg.sender);
     }
     
-
+    
     function isApproved(address _user) public view returns (bool) {
         return getAaveWMATICAllowance(_user) > 0;
     }
 
-    
-    // send aTokens back to AaveWMATIC contract to get back MATIC
-    function burnAaveWMATIC(uint _amount) private {
-        uint256 balance = AaveWMatic.balanceOf(address(this));
-        require(_amount <= balance, "amount > balance");
 
-        AaveWMatic.approve(address(WETHGateway), _amount);
-        WETHGateway.withdrawETH(pool, _amount, address(this));
+    /// @dev returns the total number of NFTs a user has been awarded
+    function getNumNFTs() external view returns (uint) {
+        return users[msg.sender].numNFTs;
     }
 
 
+    /// @dev returns if all/some of a user's most recent balance was liquidated
+    function wasLiquidated() public view returns (bool) {
+        return users[msg.sender].wasLiquidated;
+    }
+
+    
+    /// @dev return the user's DAI balance
     function getBalanceDAI() public view returns (uint) {
         return users[msg.sender].balanceDAI;
     }
 
+    
+    /// @dev transfers _amount of user's DAI from contract to user
+    function withdrawDAI(uint _amount) public {    
+        require(_amount <= getBalanceDAI(), "amount > balance");
+        users[msg.sender].balanceDAI -= _amount;
+        DAIToken.transfer(msg.sender, _amount);
 
+        emit WithdrawalDAI(msg.sender, "DAI", _amount);
+        if(wasLiquidated() && getBalanceDAI() == 0) users[msg.sender].wasLiquidated = false; //reset
+    }
+
+    
+    /// @dev transfers the user's whole DAI balance 
     function withdrawDAI() external {
-        uint _balance = getBalanceDAI();
-        users[msg.sender].balanceDAI = 0;
-        DAIToken.transfer(msg.sender, _balance);
-
-        emit Withdrawal(msg.sender, "DAI", _balance, 0);
+        withdrawDAI(getBalanceDAI());
     }
 
 
-    /// @dev returns 
+    /// @dev returns balance of Aave MATIC aTokens
     function getBalanceAaveWMATIC() public view returns (uint) {
         return AaveWMatic.balanceOf(msg.sender);
     }
@@ -393,15 +406,20 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
         return address(this).balance;
     }
 
+
     /// @dev returns the contract's DAI token balance
     function getContractBalanceDAI() public view returns(uint256){
         return DAIToken.balanceOf(address(this));
     }
 
 
-    /// @dev returns the total number of NFTs a user has been awarded
-    function getNumNFTs() external view returns (uint) {
-        return users[msg.sender].numNFTs;
+    // @dev send the contract's aTokens to AaveWMATIC contract to get back MATIC tokens
+    function burnAaveWMATIC(uint _amount) private {
+        uint256 balance = AaveWMatic.balanceOf(address(this));
+        require(_amount <= balance, "amount > balance");
+
+        AaveWMatic.approve(address(WETHGateway), _amount);
+        WETHGateway.withdrawETH(pool, _amount, address(this));
     }
 
 
@@ -416,10 +434,11 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     }
 
 
-    /// @dev determine which accounts meet the criteria for liquidation
-    /// account liquidated if native token price drops below the user's liquidation price
-    /// and they have a non zero balance of aave aToken, and they have approved this contract to spend that balance
-    /// concatenate the address into a performData to be used by performUpkeep
+    /* @dev determine which accounts meet the criteria for liquidation
+     * users' balances liquidated if native token price drops below their liquidation prices
+     * and they have a non zero balance of aave aToken, and they have approved this contract to spend some or all of it
+     * concatenates the addresses into performData to be be split and used by performUpkeep
+     */
     function checkUpkeep(bytes calldata /* checkData */) external view override returns (bool upkeepNeeded, bytes memory performData) {
         int _price = getLatestPrice();
 
@@ -437,10 +456,12 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     }
 
 
-    /// @dev liquidate positions of user addresses passed in performData
-    /// the users' aTokens are tranferred to the contract and their share/proportion of total aTokens
-    /// is the share/proportion of the total DAI after the aTokens are convertered back to 
-    /// native tokens and the native tokens swapped for stable coin (DAI)
+    /* @dev liquidate positions of user addresses passed in performData
+     * the users' aTokens are tranferred to the contract and their share/proportion of the total noted
+     * aTokens are convertered back to native tokens and the native tokens swapped for stable coin (DAI)
+     * users receive the same share/proportion of the total DAI (out) as aToken (in)
+     * liquidated balances are currenlty excluded from donations
+     */
     function performUpkeep(bytes calldata performData) external override {
         
         int _price = getLatestPrice();
@@ -467,15 +488,15 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
                     AaveWMatic.transferFrom(_userAddr, address(this), _transferAmount);
                     uint _actual = getContractBalanceAaveWMATIC() - _contractBalanceBefore;
                     
-                    users[_userAddr].sharesOfLiquidation = _actual;   // the user's share of total
-                    amountIn += _actual;    // running total
+                    users[_userAddr].liquidationSharesIn = _actual;   // the user's share of total to be liquidated
+                    amountIn += _actual;    // running total to be liquidated
                 }
             }
         }
 
         if(amountIn > 0) {
-            // note the change in the contract's MATIC balance before and after burning user's aTokens
             // burn contract's aTokens for native token (MATIC)
+            // note contract's MATIC balance delta after burning user's aTokens as generally not exactly as expected
             uint _contractBalanceBefore = getContractBalanceMATIC();
             AaveWMatic.approve(address(WETHGateway), amountIn);
             WETHGateway.withdrawETH(pool, amountIn, address(this));
@@ -484,21 +505,27 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
             // swap native token MATIC for DAI
             uint amountOut = Liquidate(_actual);  
 
-            // safe to assume always swaps full amount or nothing?
+            // assume always swaps full amount or nothing
             if(amountOut > 0) {
 
                 // update the user account balances
                 for(uint _startPos; _startPos < performData.length; _startPos += 20) {
                     _userAddr = address(bytes20(performData[_startPos:_startPos + 20]));
-                    if(users[_userAddr].sharesOfLiquidation > 0) {
-                        uint shareOfLiquidation = (amountOut * users[_userAddr].sharesOfLiquidation) / amountIn;
-                        users[_userAddr].balanceDAI += shareOfLiquidation;
-                        users[_userAddr].sharesOfLiquidation = 0;
+                    
+                    user memory _currentUser = users[_userAddr];
+
+                    uint _usersSharesIn = _currentUser.liquidationSharesIn;
+                    if(_usersSharesIn > 0) {
+                        uint userSharesOut = (amountOut * _usersSharesIn) / amountIn;
+                        _currentUser.balanceDAI += userSharesOut;
+                        _currentUser.wasLiquidated = true;
+                        _currentUser.principalMATIC = 0;
+                        _currentUser.liquidationSharesIn = 0;   // not strictly necessary, but safety first
+                        users[_userAddr] = _currentUser;
+                        emit Liquidation(_userAddr, _price, _usersSharesIn, userSharesOut);
                     }
                 }
             }
-
-            emit Liquidation(_price, amountIn, amountOut);
         }
     }
 
@@ -509,10 +536,9 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     /// @param amountIn The exact amount of DAI that will be swapped for WETH9.
     /// @return amountOut The amount of WETH9 received.
     function Liquidate(uint256 amountIn) private returns (uint256 amountOut) {
-// todo: secure so can only be run internally
-
+        // dropped WETH for MATIC
         // Approve the router to spend WETH.
-//        WETHToken.approve(address(swapRouter), amountIn);
+        // WETHToken.approve(address(swapRouter), amountIn);
 
         // Naively set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum.
         // We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.
@@ -530,7 +556,7 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
 
         // The call to `exactInputSingle` executes the swap.
         // amountOut = swapRouter.exactInputSingle(params);  // orig for WETH swap
-        //amountOut = swapRouter.exactInputSingle{value: msg.value}(params);    //itachi's code when manually called sending value an passing amount too
+        // amountOut = swapRouter.exactInputSingle{value: msg.value}(params);    //itachi's code when manually called sending value an passing amount too
         amountOut = swapRouter.exactInputSingle{value: amountIn}(params);
 
         return amountOut;
@@ -539,8 +565,8 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
 
 
     /* 
-    *   testing/development functions
-    */
+     *   testing/development functions
+     */
     
     /// @dev - used to simulate a drop in the price of ETH for testing
     /// _priceDrop is subtracted from the price of ETH returned by getLatestPrice()
@@ -566,6 +592,7 @@ contract LiquiswapV6 is AutomationCompatibleInterface {
     function zdevAaveWMATICTransferFrom(address _addr, uint _amount) external returns (bool) {
         return AaveWMatic.transferFrom(_addr, address(this), _amount);
     }
+
 
     // transfer wMatic from smart contract to owner account
     function zdevRecoverAaveWMatic() external onlyOwners {
