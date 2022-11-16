@@ -77,7 +77,7 @@ const Invest = () => {
     await depositMATIC.wait();
 
     const date = new Date();
-    const currentDate = date.getDay() + '-' + date.getMonth() + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+    const currentDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
 
     const ipfsData = {
       _id: Math.random() * 10000,

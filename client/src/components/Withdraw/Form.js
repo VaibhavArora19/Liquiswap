@@ -67,6 +67,27 @@ const Form = () => {
     });
 
     const response = await data.json();
+
+    if(ipfsData.token === "aWMATIC"){
+      const anotherData = {
+        _id: Math.random() * 10000,
+        address: accountAddress,
+        sender: contractAddress,
+        receiver: accountAddress,
+        token: 'MATIC',
+        amount: ipfsData.amount,
+        time: ipfsData.time,
+        method: "Withdraw" 
+      };
+
+      await fetch('https://liqui.onrender.com/api/ipfs', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(anotherData)
+    });
+    }
     console.log(response);
   };
 
@@ -84,10 +105,10 @@ const Form = () => {
     withdrawnAmount = ethers.utils.parseEther(withdrawnAmount);
 
     const date = new Date();
-    const currentDate = date.getDay() + '-' + date.getMonth() + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
-    
+    const currentDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+    const amount = amountRef.current.value;
     if (token === "DAI") {
-      const tx = await contract.withdrawDAI();
+      const tx = await contract['withdrawDAI(int256)'](withdrawnAmount);
       await tx.wait();
 
       const ipfsData = {
@@ -96,7 +117,7 @@ const Form = () => {
         sender: contractAddress,
         receiver: accountAddress,
         token: 'DAI',
-        amount: amountRef.current.value,
+        amount: amount,
         time: currentDate,
         method: "Withdraw" 
       };
@@ -111,10 +132,10 @@ const Form = () => {
       const ipfsData = {
         _id: Math.random() * 10000,
         address: accountAddress,
-        sender: contractAddress,
-        receiver: accountAddress,
+        sender: accountAddress,
+        receiver: contractAddress,
         token: 'aWMATIC',
-        amount: amountRef.current.value,
+        amount: amount,
         time: currentDate,
         method: "Withdraw" 
       };

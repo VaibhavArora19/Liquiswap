@@ -27,3 +27,7 @@
 
 
 // main().then().catch(e => console.log(e));
+
+const date = new Date();
+const currentDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+console.log(currentDate)
