@@ -108,7 +108,7 @@ const Form = () => {
     const currentDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
     const amount = amountRef.current.value;
     if (token === "DAI") {
-      const tx = await contract['withdrawDAI(int256)'](withdrawnAmount);
+      const tx = await contract['withdrawDAI(uint256)'](withdrawnAmount);
       await tx.wait();
 
       const ipfsData = {
