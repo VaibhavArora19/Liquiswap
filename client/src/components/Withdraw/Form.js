@@ -105,7 +105,7 @@ const Form = () => {
     withdrawnAmount = ethers.utils.parseEther(withdrawnAmount);
 
     const date = new Date();
-    const currentDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+    const currentDate = date.toLocaleString('en-GB', {timeZone: 'Europe/London'})
     const amount = amountRef.current.value;
     if (token === "DAI") {
       const tx = await contract['withdrawDAI(uint256)'](withdrawnAmount);
@@ -118,7 +118,7 @@ const Form = () => {
         receiver: accountAddress,
         token: 'DAI',
         amount: amount,
-        time: currentDate,
+        time: currentDate + ' (UTC + 0)',
         method: "Withdraw" 
       };
 
@@ -136,7 +136,7 @@ const Form = () => {
         receiver: contractAddress,
         token: 'aWMATIC',
         amount: amount,
-        time: currentDate,
+        time: currentDate + ' (UTC + 0)',
         method: "Withdraw" 
       };
 

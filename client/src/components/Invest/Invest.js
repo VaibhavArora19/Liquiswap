@@ -77,7 +77,7 @@ const Invest = () => {
     await depositMATIC.wait();
 
     const date = new Date();
-    const currentDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+    const currentDate = date.toLocaleString('en-GB', {timeZone: 'Europe/London'})
 
     const ipfsData = {
       _id: Math.random() * 10000,
@@ -86,7 +86,7 @@ const Invest = () => {
       receiver: contractAddress,
       token: 'MATIC',
       amount: valueRef.current.value,
-      time: currentDate,
+      time: currentDate + ' (UTC + 0)',
       method: "Deposit"  
     };
 
