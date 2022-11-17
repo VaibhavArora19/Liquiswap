@@ -61,7 +61,7 @@ const Navbar = () => {
         contract
       };
       let wethPrice = await contract.getLatestPrice();
-      wethPrice = ethers.utils.formatEther(wethPrice);
+      wethPrice = wethPrice / 100000000;  
       dispatch(authActions.connect(accountDetails));
       dispatch(authActions.latestPrice(wethPrice));
     
