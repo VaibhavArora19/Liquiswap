@@ -28,6 +28,20 @@ const Form = () => {
     }
   }, [isConnected]);
 
+
+  setInterval(() => {
+
+    (async function(){
+      if(isConnected){
+
+        let awBalance = await contract.getBalanceAaveWMATIC();
+        setAWMaticBalance(ethers.utils.formatEther(awBalance));
+        
+      }
+    })();
+
+  }, 5000);
+
   const showAmountHandler = async (event) => {
     const token = event.target.value;
     let totalBalance;
