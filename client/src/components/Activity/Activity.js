@@ -42,8 +42,8 @@ const Activity = () => {
     
     return (
         <React.Fragment>
-        {( cidArray && cidArray.length !== 0) ? cidArray.map((obj) => {
-            return <Alert key = {obj._id} sender = {obj.sender} receiver = {obj.receiver} time = {obj.time} amount = {obj.amount} tokenName = {obj.token} method = {obj.method}/>     
+        {( cidArray && cidArray.length !== 0) ? cidArray.map((obj, index) => {
+            return <Alert key = {index} sender = {obj.sender} receiver = {obj.receiver} time = {obj.time} amount = {obj.amount} tokenName = {obj.token} method = {obj.method}/>     
         }) : <div style = {{margin: "10% auto"}}>
         <h1 style = {emptyHeading}>Nothing to see here </h1>
         <h3 style={emptyMessage}>You have not made any transactions recently</h3>

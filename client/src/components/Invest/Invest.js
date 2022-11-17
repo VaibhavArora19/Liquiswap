@@ -70,7 +70,7 @@ const Invest = () => {
     setIsLoading(true);
 
     let ethValue = ethers.utils.parseEther(valueRef.current.value);
-    let liquidationPrice = ethers.utils.parseEther(liquidationValueRef.current.value);
+    let liquidationPrice = liquidationValueRef.current.value * 100000000;
 
     
     const depositMATIC = await contract["supplyLiquidity(int256)"](liquidationPrice, {value: ethValue});

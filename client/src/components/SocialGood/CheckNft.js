@@ -18,7 +18,7 @@ const CheckNft = () => {
         let totalNft = await contract.getNumNFTs();
         totalNft = totalNft.toString();
         for(let i = 0; i<totalNft; i++){
-          list.push(<img src = {SocialGood} />);
+          list.push(<img src = "https://img.icons8.com/pastel-glyph/216/40C057/bunch-flowers.png" />);
         }
         setNftCount(list);
 
@@ -40,7 +40,7 @@ const CheckNft = () => {
         </ul>
       </div>
       <div className="grid grid-cols-3">
-      {nftCount>=0 && nftCount}
+      {nftCount.length >= 0 && nftCount}
       </div>
       <h3 className={classes.message}>
         {nftCount === -1 && "Please connect your wallet"}
