@@ -15,7 +15,7 @@ const CheckNft = () => {
     if(isConnected){
       (async function(){
 
-        let totalNft = await contract.getNumNFTs();
+        let totalNft = await contract['getNumNFTs()']();
         totalNft = totalNft.toString();
         for(let i = 0; i<totalNft; i++){
           list.push(<img src = "https://img.icons8.com/pastel-glyph/216/40C057/bunch-flowers.png" />);

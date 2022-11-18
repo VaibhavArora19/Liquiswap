@@ -62,12 +62,6 @@ export const ABI = [
         "internalType": "address",
         "name": "user",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "numNFTs",
-        "type": "uint256"
       }
     ],
     "name": "EarnedNFT",
@@ -429,6 +423,38 @@ export const ABI = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getNumNFTs",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPriceDecimals",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getPrincipal",
     "outputs": [
@@ -552,6 +578,19 @@ export const ABI = [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "setLiquiswapNFT",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "_principal",
         "type": "uint256"
@@ -621,11 +660,6 @@ export const ABI = [
         "internalType": "bool",
         "name": "wasLiquidated",
         "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "numNFTs",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -728,6 +762,19 @@ export const ABI = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "zdevAwardNFT",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "zdevBurnContractATokens",
     "outputs": [],
@@ -801,7 +848,7 @@ export const ABI = [
   }
 ]
 
-export const contractAddress = "0x64D1eE237c1633044b812F0a618a9171D7d2A803";
+export const contractAddress = "0xB0b71b99917DD5b32CAe43e6E3B9c65BB1E88796";
 
 export const ERC20ABI = [
     "function approve(address spender, uint256 amount) external returns (bool)",

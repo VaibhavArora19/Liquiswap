@@ -2,7 +2,7 @@
 
 // swap MATIC <-> DAI 
 
-pragma solidity =0.7.6;
+pragma solidity =0.8.7;
 pragma abicoder v2;
 
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
