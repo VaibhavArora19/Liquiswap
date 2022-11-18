@@ -24,6 +24,12 @@ export const ABI = [
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "balance",
+        "type": "uint256"
       }
     ],
     "name": "Deposit",
@@ -34,6 +40,44 @@ export const ABI = [
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "charity",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Donation",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "EarnedNFT",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": true,
         "internalType": "int256",
         "name": "price",
         "type": "int256"
@@ -41,13 +85,13 @@ export const ABI = [
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "targetAmount",
+        "name": "amountMATIC",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "actualAmount",
+        "name": "amountDAI",
         "type": "uint256"
       }
     ],
@@ -100,9 +144,40 @@ export const ABI = [
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "donation",
+        "type": "uint256"
       }
     ],
     "name": "Withdrawal",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "token",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "WithdrawalDAI",
     "type": "event"
   },
   {
@@ -133,7 +208,7 @@ export const ABI = [
     "inputs": [
       {
         "internalType": "bytes",
-        "name": "checkData",
+        "name": "",
         "type": "bytes"
       }
     ],
@@ -336,6 +411,64 @@ export const ABI = [
   },
   {
     "inputs": [],
+    "name": "getNumNFTs",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getNumNFTs",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPriceDecimals",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPrincipal",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "isApproved",
     "outputs": [
       {
@@ -414,12 +547,56 @@ export const ABI = [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_charity",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "sendDonation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "int256",
         "name": "_liquidationPrice",
         "type": "int256"
       }
     ],
     "name": "setLiquidationPrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "setLiquiswapNFT",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_principal",
+        "type": "uint256"
+      }
+    ],
+    "name": "setPrincipal",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -460,19 +637,29 @@ export const ABI = [
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "principalMATIC",
+        "type": "uint256"
+      },
+      {
         "internalType": "int256",
         "name": "liquidationPrice",
         "type": "int256"
       },
       {
         "internalType": "uint256",
-        "name": "sharesOfLiquidation",
+        "name": "liquidationSharesIn",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
         "name": "balanceDAI",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "wasLiquidated",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -499,6 +686,32 @@ export const ABI = [
   },
   {
     "inputs": [],
+    "name": "wasLiquidated",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawDAI",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
     "name": "withdrawDAI",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -549,6 +762,19 @@ export const ABI = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "zdevAwardNFT",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "zdevBurnContractATokens",
     "outputs": [],
@@ -591,13 +817,6 @@ export const ABI = [
   },
   {
     "inputs": [],
-    "name": "zdevRecoverMATIC",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "zdevRecoverMatic",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -617,12 +836,19 @@ export const ABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "zdevWithdrawRecoverMatic",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "stateMutability": "payable",
     "type": "receive"
   }
 ]
 
-export const contractAddress = "0x5b24D1805b6F7436f427336cB41a2803DdD29dcc";
+export const contractAddress = "0xB0b71b99917DD5b32CAe43e6E3B9c65BB1E88796";
 
 export const ERC20ABI = [
     "function approve(address spender, uint256 amount) external returns (bool)",

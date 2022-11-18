@@ -63,7 +63,7 @@ const Graph = () => {
         <h1>Polygon</h1>
         <h2>(MATIC)</h2>
       </div>
-      <h3 className={classes.highlight}>{price ? `$${price}` : "Loading"}</h3>
+      <h3 className={classes.highlight}>{price ? `$${price}` : "Loading"} <span style = {{fontSize: "1rem", fontWeight: "500", color: "hsl(var(--nc))"}}> (*as per chainlink)</span></h3>
       <canvas id="myChart" height="45" width="100"></canvas>
     </div>
   );

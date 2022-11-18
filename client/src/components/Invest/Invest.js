@@ -70,14 +70,14 @@ const Invest = () => {
     setIsLoading(true);
 
     let ethValue = ethers.utils.parseEther(valueRef.current.value);
-    let liquidationPrice = ethers.utils.parseEther(liquidationValueRef.current.value);
+    let liquidationPrice = liquidationValueRef.current.value * 100000000;
 
     
     const depositMATIC = await contract["supplyLiquidity(int256)"](liquidationPrice, {value: ethValue});
     await depositMATIC.wait();
 
     const date = new Date();
-    const currentDate = date.getDay() + '-' + date.getMonth() + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+    const currentDate = date.toLocaleString('en-GB', {timeZone: 'Europe/London'})
 
     const ipfsData = {
       _id: Math.random() * 10000,
@@ -86,7 +86,7 @@ const Invest = () => {
       receiver: contractAddress,
       token: 'MATIC',
       amount: valueRef.current.value,
-      time: currentDate,
+      time: currentDate + ' (UTC + 0)',
       method: "Deposit"  
     };
 

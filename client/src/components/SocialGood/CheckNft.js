@@ -1,65 +1,51 @@
 import classes from "./CheckNft.module.css";
 import SocialGood from "../../images/social-good.png";
-import {useState} from "react";
-import Footer from "../Footer/Footer";
+import {useState, useEffect} from "react";
+import { useSelector } from "react-redux";
 
 const CheckNft = () => {
-  const [showAlert, setShowAlert] = useState(false);
+  const [nftCount, setNftCount] = useState(-1);
 
-  const checkNftHandler = (event) => {
-    event.preventDefault();
+  const contract = useSelector((state) => state.auth.contract);
+  const isConnected = useSelector((state) => state.auth.isConnected);
+  const list = [];
 
-    setShowAlert(true);
-  };
+  useEffect(() => {
 
-  const claimHandler = (event) => {
-    event.preventDefault();
-  };
+    if(isConnected){
+      (async function(){
+
+        let totalNft = await contract['getNumNFTs()']();
+        totalNft = totalNft.toString();
+        for(let i = 0; i<totalNft; i++){
+          list.push(<img src = "https://img.icons8.com/pastel-glyph/216/40C057/bunch-flowers.png" />);
+        }
+        setNftCount(list);
+
+      })();  
+    }
+
+  }, [isConnected]);
+
 
   return (
     <div className={classes.nftSection}>
-      {showAlert && <div className={`alert shadow-lg ${classes.alert}`}>
-        <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            className="stroke-info flex-shrink-0 w-6 h-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
-          <span>You have 2 claimable NFT</span>
-        </div>
-        <div className="flex-none">
-          <button className="btn btn-sm btn-ghost" onClick = {() => {setShowAlert(false)}}>Deny</button>
-          <button className="btn btn-sm btn-primary" onClick={claimHandler}>Claim</button>
-        </div>
-      </div>}
       <div className={classes.steps}>
         <ul className="steps">
-          <li className="step step-warning">Socially Active ⛳</li>
-          <li className="step step-warning">Philanthropist 🌼</li>
-          <li className="step ">Warrior 🎇</li>
-          <li className="step ">People's Hero 🦸‍♂️</li>
-          <li className="step ">Legendary Member 🎉</li>
+          <li className={`${"step"} ${nftCount.length >= 1 && "step-warning"}`}>Socially Active ⛳</li>
+          <li className={`${"step"} ${nftCount.length >= 2 && "step-warning"}`}>Philanthropist 🌼</li>
+          <li className={`${"step"} ${nftCount.length >= 3 && "step-warning"}`}>Warrior 🎇</li>
+          <li className={`${"step"} ${nftCount.length >= 4 && "step-warning"}`}>People's Hero 🦸‍♂️</li>
+          <li className={`${"step"} ${nftCount.length >= 5 && "step-warning"}`}>Legendary Member 🎉</li>
         </ul>
       </div>
       <div className="grid grid-cols-3">
-        <img src={SocialGood} />
-        <img src={SocialGood} />
+      {nftCount.length >= 0 && nftCount}
       </div>
-      <button onClick = {checkNftHandler} className={`btn btn-warning btn-wide ${classes.claim}`}>Claim NFT</button>
-      <div>
-        <h3 className={classes.message}>
-          Collect 3 more NFT by donating yield to become a Liquiswap DAO member
-        </h3>
-      </div>
-      <Footer />
+      <h3 className={classes.message}>
+        {nftCount === -1 && "Please connect your wallet"}
+        {nftCount !== -1 && ((nftCount.length < 5) ? `Collect ${5 - nftCount.length} more NFT by donating yield to become a Liquiswap DAO member`: 'You are now a Liquiswap DAO member 🎉🎉')}
+      </h3>
     </div>
   );
 };

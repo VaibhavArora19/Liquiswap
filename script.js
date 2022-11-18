@@ -27,3 +27,13 @@
 
 
 // main().then().catch(e => console.log(e));
+
+const date = new Date();
+// const currentDate = date.getTime();
+// const currentDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+    const currentDate = date.toLocaleString('en-GB', {timeZone: 'Europe/London'})
+
+    const time = currentDate.split('/')[0] + '-' + currentDate.split('/')[1] + '-' + currentDate.split('/')[2] + " " + currentDate.split(':')[0] + ":" + currentDate.split(':')[1];
+ 
+    // console.log('time is ', time);
+    console.log(currentDate + ' (UTC + 0)')

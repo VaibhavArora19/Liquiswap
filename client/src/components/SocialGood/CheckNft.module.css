@@ -1,8 +1,9 @@
 .message {
-    margin-top: 2%;
-    font-size: 1.2rem;
+    margin-top: 7%;
+    font-size: 1.4rem;
     text-align: center;
     margin-bottom: 6%;
+    font-weight: 600;
 }
 
 .steps {
@@ -12,20 +13,21 @@
 }
 
 .nftSection img{
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    box-shadow: rgba(67, 179, 19, 0.755) 0px 5px 15px;
     margin: 10% auto;
-    width: 250px;
+    width: 210px;
     padding: 8%;
     border-radius: 20px;
 }
 
 .alert {
-    width: 80%;
-    z-index: 10;
+    width: 60% !important;
     position: fixed;
-    margin-left: 10%;
+    margin-left: 22%;
+    z-index: 10;
     top: 8%;
 }
+
 
 .claim{
     margin-left: 38%;
