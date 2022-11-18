@@ -1,3 +1,16 @@
+v7 
+deployed to 0xB0b71b99917DD5b32CAe43e6E3B9c65BB1E88796
+nft:0x92ED56a2999f59EfbA0cD233BEE515F2e2E3cFd7
+changes
+
+
+	added override for getNumNFTs as needed to call from NFT contract
+	    getNumNFTs(address _user) public view returns (uint)
+		getNumNFTs() external view returns (uint)
+
+
+
+
 v6.1 changes
 
 deployed to 0x64D1eE237c1633044b812F0a618a9171D7d2A803
