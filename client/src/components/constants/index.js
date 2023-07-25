@@ -848,7 +848,7 @@ export const ABI = [
   }
 ]
 
-export const contractAddress = "0xB0b71b99917DD5b32CAe43e6E3B9c65BB1E88796";
+export const contractAddress = "0xcc4Ee56D0537279C6AA6348DF950B7EB66644b9f";
 
 export const ERC20ABI = [
     "function approve(address spender, uint256 amount) external returns (bool)",
